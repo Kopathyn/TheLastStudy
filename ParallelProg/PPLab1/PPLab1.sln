@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35222.181
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PPLab1", "PPLab1.vcxproj", "{83D03F43-6747-4DBE-B6CA-01274D4CF795}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Debug|x64.ActiveCfg = Debug|x64
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Debug|x64.Build.0 = Debug|x64
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Debug|x86.ActiveCfg = Debug|Win32
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Debug|x86.Build.0 = Debug|Win32
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Release|x64.ActiveCfg = Release|x64
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Release|x64.Build.0 = Release|x64
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Release|x86.ActiveCfg = Release|Win32
+		{83D03F43-6747-4DBE-B6CA-01274D4CF795}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6141D75B-22C7-4640-89AC-33C4F544B7FB}
+	EndGlobalSection
+EndGlobal
