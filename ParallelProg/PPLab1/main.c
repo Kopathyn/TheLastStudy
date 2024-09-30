@@ -1,6 +1,8 @@
-#include "mpi.h"
 #include <stdio.h>
+#include "mpi.h"
 #include <math.h>
+
+#pragma comment(lib, "msmpi.lib")
 
 #define C 0.9
 
