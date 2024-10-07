@@ -40,4 +40,4 @@
 	)
 )
 
-(print (avg students))
+(avg students)
