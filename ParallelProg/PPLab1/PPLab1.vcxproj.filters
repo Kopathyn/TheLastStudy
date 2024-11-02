@@ -15,10 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.c">
+    <ClCompile Include="send_recv.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
-    <ClCompile Include="main2.c">
+    <ClCompile Include="bcast_reduce.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="pack_unpack.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
