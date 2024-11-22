@@ -8,11 +8,11 @@ static double HyperCosCh(double x) { return (exp(x) + exp(-x)) / 2; }
 
 static double f(double a) { return HyperCosCh(0.9 * a) * cos(0.9 * a); }
 
-static double fi(double a) { return (( HyperSinSh(0.9 * a) * cos (0.9 * a) + HyperCosCh(0.9 * a) * sin(0.9 * a) ) /  2); }
+static double fi(double a) { return (( HyperSinSh(0.9 * a) * cos (0.9 * a) + HyperCosCh(0.9 * a) * sin(0.9 * a) ) /  (0.9 * 2)); }
 
 int main(int argc, char* argv[])
 {
-    int intervals = 10000, procRang, numprocs, i;
+    int intervals = 100, procRang, numprocs, i;
     double myfunk, funk, step, sum, x;
 
     double xl = -1.2,	// начало

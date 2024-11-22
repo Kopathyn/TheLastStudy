@@ -131,9 +131,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bcast_reduce.c" />
     <ClCompile Include="pack_unpack.c" />
     <ClCompile Include="send_recv.c" />
-    <ClCompile Include="bcast_reduce.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

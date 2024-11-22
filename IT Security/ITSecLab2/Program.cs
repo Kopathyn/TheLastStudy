@@ -7,12 +7,16 @@ class Program
     {
         DES encr = new DES();
 
-        string message = "hello world";
+        string message = "eternity";
         string key = "alekos";
 
-        string encryptedMessage = encr.EncryptMessage(message, key);
-        Console.WriteLine(encryptedMessage);
+        StreamWriter streamWriter = new StreamWriter(@"..\..\..\text.txt");
 
-        Console.WriteLine(encr.DecryptMessage(encryptedMessage, key));
+        string encryptedMessage = encr.EncryptMessage(message, key);
+        streamWriter.Write(encryptedMessage);
+        streamWriter.Write('\n');
+        streamWriter.Write(encr.DecryptMessage(encryptedMessage, key));
+        streamWriter.Close();
+        
     }
 }
