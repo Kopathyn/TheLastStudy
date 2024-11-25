@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
 namespace ITSecLab2
 {
@@ -15,7 +10,7 @@ namespace ITSecLab2
         /// <summary>
         /// Конвертация сообщения в биты
         /// </summary>
-        private string ConvertToBits(byte[] message)
+        protected string ConvertToBits(byte[] message)
         {
             string bits = "";
 
@@ -26,35 +21,9 @@ namespace ITSecLab2
         }
 
         /// <summary>
-        /// Первичная перестановка 64 битного блока
-        /// </summary>
-        private string Initial_Permutation(string bit_message)
-        {
-            string IPmessage = "";
-
-            for (int i = 0; i < _blockSize; i++)
-                IPmessage += bit_message[_initPermTable[i] - 1];
-
-            return IPmessage;
-        }
-
-        /// <summary>
-        /// Конечная перестановка 64 битного блока
-        /// </summary>
-        private string End_Permutation(string bit_message)
-        {
-            string EPmessage = "";
-
-            for (int i = 0; i < _blockSize; i++)
-                EPmessage += bit_message[_endPermTable[i] - 1];
-
-            return EPmessage;
-        }
-
-        /// <summary>
         /// Функция преобразования сообщения до кратности 64
         /// </summary>
-        private string MessageToBlocks(string bitMessage)
+        protected string MakeRightMessageBlock(string bitMessage)
         {
             if ((bitMessage.Length) % _blockSize != 0)
             {
@@ -68,11 +37,58 @@ namespace ITSecLab2
         }
 
         /// <summary>
+        /// Сложение по модулю 2
+        /// </summary>
+        protected string XOR(string a, string b)
+        {
+            string result = "";
+
+            for (int i = 0; i < a.Length; i++)
+            {
+                bool x = Convert.ToBoolean(Convert.ToInt32(a[i].ToString()));
+                bool y = Convert.ToBoolean(Convert.ToInt32(b[i].ToString()));
+
+                if (x ^ y)
+                    result += "1";
+                else
+                    result += "0";
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Первичная перестановка 64 битного блока
+        /// </summary>
+        private string InitialPermutation(string bit_message)
+        {
+            string IPmessage = "";
+
+            for (int i = 0; i < _blockSize; i++)
+                IPmessage += bit_message[_initPermTable[i] - 1];
+
+            return IPmessage;
+        }
+
+        /// <summary>
+        /// Конечная перестановка 64 битного блока
+        /// </summary>
+        private string EndPermutation(string bit_message)
+        {
+            string EPmessage = "";
+
+            for (int i = 0; i < _blockSize; i++)
+                EPmessage += bit_message[_endPermTable[i] - 1];
+
+            return EPmessage;
+        }
+
+        /// <summary>
         /// Преобразование ключа
         /// </summary>
-        private string bitBlockKey(string _key)
+        private string MakeRightKey(string _key)
         {
-            string Key = ConvertToBits(Encoding.UTF8.GetBytes(_key));
+            string Key = _key;
 
             if (Key.Length < _keySize)
             {
@@ -97,34 +113,20 @@ namespace ITSecLab2
                 return newKey;
             }
             else
-                return Key;
-        }
-
-            /// <summary>
-            /// Сложение по модулю 2
-            /// </summary>
-        private string XOR(string a, string b)
-        {
-            string result = "";
-
-            for (int i = 0; i < a.Length; i++)
             {
-                bool x = Convert.ToBoolean(Convert.ToInt32(a[i].ToString()));
-                bool y = Convert.ToBoolean(Convert.ToInt32(b[i].ToString()));
+                string newKey = "";
 
-                if (x ^ y)
-                    result += "1";
-                else
-                    result += "0";
+                for (int i = 0; i < _cdKeyTable.Length; i++)
+                    newKey += _key[_cdKeyTable[i] - 1];
+
+                return newKey;
             }
-            
-            return result;
         }
 
         /// <summary>
         /// Основная функция шифрования
         /// </summary>
-        private string EncryptFunction(string _someMesPart, string _keyPart)
+        private string MainEncryptionFunction(string _someMesPart, string _keyPart)
         {
             string extendedBlock = "";
 
@@ -191,40 +193,9 @@ namespace ITSecLab2
             return shiftedKey;
         }
 
-        private string ShiftRight(string byteArray)
-        {
-            char temp = byteArray[byteArray.Length - 1];
-            string newByteArray = "";
-
-            for (int i = byteArray.Length - 1; i > 0; i--)
-                newByteArray += byteArray[i - 1];
-
-            newByteArray += temp;
-
-            return newByteArray;
-        }
-
-        private string KeyShiftRight(string _key, int round)
-        {
-            string firstKeyPart = _key[0..(_key.Length / 2)];
-            string secondKeyPary = _key[(_key.Length / 2).._key.Length];
-
-            for (int i = 0; i < _keyShifts[round]; i++)
-            {
-                firstKeyPart = ShiftRight(firstKeyPart);
-                secondKeyPary = ShiftRight(secondKeyPary);
-            }
-
-            string shiftedKey = ConnectBlocks(firstKeyPart, secondKeyPary);
-
-            return shiftedKey;
-        }
-
         /// <summary>
         /// Функция нахождения ключа раунда
         /// </summary>
-        /// <param name="Key"></param>
-        /// <returns></returns>
         private string FindRoundKey(string Key)
         {
             string roundKey = "";
@@ -242,30 +213,24 @@ namespace ITSecLab2
         {
             string ConnectedBlock = "";
 
-            //foreach (var x in blockOne)
-            //    ConnectedBlock += x;
-
-            //foreach (var x in blockTwo)
-            //    ConnectedBlock += x;
-
             ConnectedBlock = blockOne + blockTwo;
 
             return ConnectedBlock;
         }
 
         /// <summary>
-        /// Алгоритм шифрования
+        /// Шифрование сообщения
         /// </summary>
-        public string EncryptMessage(string message, string key)
+        public string EncryptMessage(byte[] message, byte[] key)
         {
             //Преобразование в биты
-            byte[] oldByteMessage = Encoding.UTF8.GetBytes(message);
-            string bitMessage = ConvertToBits(oldByteMessage);
+            string bitMessage = ConvertToBits(message);
 
             // Преобразование сообщения для кратности 64
-            bitMessage = MessageToBlocks(bitMessage);
+            bitMessage = MakeRightMessageBlock(bitMessage);
 
-            string bitKey = bitBlockKey(key);
+            string bitKey = ConvertToBits(key);
+            bitKey = MakeRightKey(bitKey);
 
             // Количество блоков
             int amountOfBlocks = bitMessage.Length / _blockSize;
@@ -277,59 +242,80 @@ namespace ITSecLab2
             for (int i = 0; i < amountOfBlocks; i++)
             {
                 string messageBlock = bitMessage.Substring((i * _blockSize), _blockSize);
-                messageBlock = Initial_Permutation(messageBlock);
+                messageBlock = InitialPermutation(messageBlock);
 
                 // Деление сообщения на блоки по 32 бита
-                string leftMessagePart = messageBlock.Substring(0, _blockSize / 2);
-                string rightMessagePart = messageBlock.Substring(_blockSize / 2, _blockSize / 2);
+                string leftMessagePart = messageBlock.Substring(0, _halfBlockSize);
+                string rightMessagePart = messageBlock.Substring(_halfBlockSize, _halfBlockSize);
 
                 for (int j = 0; j < _rounds; j++)
                 {
                     bitKey = KeyShiftLeft(bitKey, j);
                     string roundKey = FindRoundKey(bitKey);
 
-                    string _buffer = XOR(rightMessagePart, EncryptFunction(leftMessagePart, roundKey));
-                    rightMessagePart = leftMessagePart;
-                    leftMessagePart = _buffer;
+                    string _buffer = XOR(leftMessagePart, MainEncryptionFunction(rightMessagePart, roundKey));
+                    leftMessagePart = rightMessagePart;
+                    rightMessagePart = _buffer;
                 }
 
                 // Соединение двух блоков в один
-                encryptedMessage += End_Permutation(ConnectBlocks(rightMessagePart, leftMessagePart));
+                encryptedMessage += EndPermutation(ConnectBlocks(leftMessagePart, rightMessagePart));
             }
-
-            byte[] byteMessage = new byte[encryptedMessage.Length / 8];
-            for (int i = 0; i < (encryptedMessage.Length / 8); i++)
-            {
-                string part = encryptedMessage.Substring((i * 8), 8);
-                byteMessage[i] = Convert.ToByte(part, 2);
-            }
-
-            encryptedMessage = Encoding.UTF8.GetString(byteMessage);
 
             return encryptedMessage;
         }
 
-        public string DecryptMessage(string message, string key)
+        /// <summary>
+        /// Функция для шифрования сообщения в DESX
+        /// </summary>
+        protected string EncryptMessage(string message, string key)
         {
-            //Преобразование в биты
-            string bitMessage = ConvertToBits(Encoding.UTF8.GetBytes(message));
+            string bitKey = MakeRightKey(key);
 
-            // Преобразование сообщения для кратности 64
-            bitMessage = MessageToBlocks(bitMessage);
+            // Запись зашифрованного сообщения
+            string encryptedMessage = "";
+            // Первичная перестановка
+            string messageBlock = InitialPermutation(message);
 
-            string bitKey = bitBlockKey(key);
+            // Деление сообщения на блоки по 32 бита
+            string leftMessagePart = messageBlock.Substring(0, _halfBlockSize);
+            string rightMessagePart = messageBlock.Substring(_halfBlockSize, _halfBlockSize);
+
+            for (int j = 0; j < _rounds; j++)
+            {
+                bitKey = KeyShiftLeft(bitKey, j);
+                string roundKey = FindRoundKey(bitKey);
+
+                string _buffer = XOR(leftMessagePart, MainEncryptionFunction(rightMessagePart, roundKey));
+                leftMessagePart = rightMessagePart;
+                rightMessagePart = _buffer;
+            }
+
+            // Соединение двух блоков в один
+            encryptedMessage += EndPermutation(ConnectBlocks(leftMessagePart, rightMessagePart));
+
+            return encryptedMessage;
+        }
+
+        /// <summary>
+        /// Расшифрование сообщения
+        /// </summary>
+        public string DecryptMessage(string message, byte[] key)
+        {
+            string bitMessage = message;
+            string bitKey = MakeRightKey(ConvertToBits(key));
 
             // Количество блоков
             int amountOfBlocks = bitMessage.Length / _blockSize;
 
-            // Запись зашифрованного сообщения
-            string encryptedMessage = "";
+            // Запись разшифрованного сообщения
+            string decrytpedMessage = "";
 
             // Шифрование блоков
             for (int i = 0; i < amountOfBlocks; i++)
             {
                 string messageBlock = bitMessage.Substring((i * _blockSize), _blockSize);
-                messageBlock = Initial_Permutation(messageBlock);
+                messageBlock = InitialPermutation(messageBlock);
 
                 // Деление сообщения на блоки по 32 бита
                 string leftMessagePart = messageBlock.Substring(0, _blockSize / 2);
@@ -340,33 +326,66 @@ namespace ITSecLab2
                     bitKey = KeyShiftLeft(bitKey, j);
                     string roundKey = FindRoundKey(bitKey);
 
-                    string _buffer = XOR(leftMessagePart, EncryptFunction(rightMessagePart, roundKey)); ;
-                    leftMessagePart = rightMessagePart;
-                    rightMessagePart = _buffer; 
+                    string _buffer = XOR(rightMessagePart, MainEncryptionFunction(leftMessagePart, roundKey)); ;
+                    rightMessagePart = leftMessagePart;
+                    leftMessagePart = _buffer; 
                 }
 
                 // Соединение двух блоков в один
-                encryptedMessage += End_Permutation(ConnectBlocks(leftMessagePart, rightMessagePart));
+                decrytpedMessage += EndPermutation(ConnectBlocks(leftMessagePart, rightMessagePart));
             }
 
-
-
-            byte[] byteMessage = new byte[encryptedMessage.Length / 8];
-            for (int i = 0; i < (encryptedMessage.Length / 8); i++)
+            byte[] byteMessage = new byte[decrytpedMessage.Length / 8];
+            for (int i = 0; i < (decrytpedMessage.Length / 8); i++)
             {
-                string part = encryptedMessage.Substring((i * 8), 8);
+                string part = decrytpedMessage.Substring((i * 8), 8);
                 byteMessage[i] = Convert.ToByte(part, 2);
             }
 
-            encryptedMessage = Encoding.UTF8.GetString(byteMessage);
+            decrytpedMessage = Encoding.UTF8.GetString(byteMessage);
 
-            return encryptedMessage;
+            return decrytpedMessage;
         }
+
         
+        /// <summary>
+        /// Расшифрование сообщения для DESX
+        /// </summary>
+        protected string DecryptMessage(string message, string key)
+        {
+            string bitMessage = message;
+            string bitKey = MakeRightKey(key);
+
+            // Запись разшифрованного сообщения
+            string decrytpedMessage = "";
+
+            string messageBlock = bitMessage;
+            messageBlock = InitialPermutation(messageBlock);
+
+            // Деление сообщения на блоки по 32 бита
+            string leftMessagePart = messageBlock.Substring(0, _halfBlockSize);
+            string rightMessagePart = messageBlock.Substring(_halfBlockSize, _halfBlockSize);
+
+            for (int j = _rounds - 1; j >= 0; j--)
+            {
+                bitKey = KeyShiftLeft(bitKey, j);
+                string roundKey = FindRoundKey(bitKey);
+
+                string _buffer = XOR(rightMessagePart, MainEncryptionFunction(leftMessagePart, roundKey)); ;
+                rightMessagePart = leftMessagePart;
+                leftMessagePart = _buffer;
+            }
+
+            // Соединение двух блоков в один
+            decrytpedMessage += EndPermutation(ConnectBlocks(leftMessagePart, rightMessagePart));
+
+            return decrytpedMessage;
+        }
+
         // Переменные шифра
 
-        private const int _blockSize = 64; // Размер одного блока сообщения
-        private const int _halfBlockSize = 32; // Размер части блока сообщения
+        protected const int _blockSize = 64; // Размер одного блока сообщения
+        protected const int _halfBlockSize = 32; // Размер части блока сообщения
         private const int _rounds = 16; // Количество раундов
         private const int _keySize = 64; // Размер ключа
 
