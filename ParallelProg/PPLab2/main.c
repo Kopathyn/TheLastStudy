@@ -1,15 +1,15 @@
-// Var 14 - СЃСЂРµРґРЅРµРµ-Р°СЂРёС„РјРµС‚РёС‡РµСЃРєРѕРµ РїР°СЂ СЃРѕСЃРµРґРЅРёС… СЌР»РµРјРµРЅС‚РѕРІ
+// Var 14 - среднее-арифметическое пар соседних элементов
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
-#include <mpi.h>
+#include "mpi.h"
 
-/// @brief Р¤СѓРЅРєС†РёСЏ РІС‹С‡РёСЃР»РµРЅРёСЏ РїР°СЂ СЃСЂРµРґРЅРµРіРѕ Р°СЂРёС„РјРµС‚РёС‡РµСЃРєРѕРіРѕ РїР°СЂ СЃРѕСЃРµРґРЅРёС… СЌР»РµРјРµРЅС‚РѕРІ
-/// @param array РњР°СЃСЃРёРІ РґР°РЅРЅС‹С…
-/// @param size Р Р°Р·РјРµСЂ РјР°СЃСЃРёРІР°
-/// @return РЎСЂРµРґРЅРµРµ Р°СЂРёС„РјРµС‚РёС‡РµСЃРєРѕРµ РїР°СЂ СЃРѕСЃРµРґРЅРёС… СЌР»РµРјРµРЅС‚РѕРІ
-float average_pairs(float *array, int size)
+/// @brief Функция вычисления пар среднего арифметического пар соседних элементов
+/// @param array Массив данных
+/// @param size Размер массива
+/// @return Среднее арифметическое пар соседних элементов
+float average_pairs(float* array, int size)
 {
     double sum = 0;
     int counter = 0;
@@ -26,9 +26,9 @@ float average_pairs(float *array, int size)
     return sum;
 }
 
-/// @brief РЎРѕР·РґР°РЅРёРµ РґРёРЅР°РјРёС‡РµСЃРєРѕРіРѕ РјР°СЃСЃРёРІР° СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
-/// @param NumAmount РљРѕР»РёС‡РµСЃС‚РІРѕ С‡РёСЃРµР»
-/// @return РњР°СЃСЃРёРІ СЃР»СѓС‡Р°Р№РЅС‹С… С‡РёСЃРµР»
+/// @brief Создание динамического массива случайных чисел
+/// @param NumAmount Количество чисел
+/// @return Массив случайных чисел
 float* CreateArrayWithGenarg(int NumAmount)
 {
     srand(time(0));
@@ -40,57 +40,63 @@ float* CreateArrayWithGenarg(int NumAmount)
     return RandNumsArray;
 }
 
-/// @brief Р’С‹РІРѕРґ РјР°СЃСЃРёРІР° РґР°РЅРЅС‹С… РІ РєРѕРЅСЃРѕР»СЊ
-/// @param array РњР°СЃСЃРёРІ РґР°РЅРЅС‹С…
-/// @param size Р Р°Р·РјРµСЂ РјР°СЃСЃРёРІР°
+/// @brief Вывод массива данных в консоль
+/// @param array Массив данных
+/// @param size Размер массива
 void PrintArray(float* array, int size)
 {
     for (int i = 0; i < size; i++)
         printf("%f ", array[i]);
-    
+
     printf("\n");
 }
 
 int main(int argc, char* argv[])
 {
-    // РџРµСЂРµРјРµРЅРЅС‹Рµ РІСЂРµРјРµРЅРё
+    // Переменные времени
     double startTime, endTime;
 
-    int procRank; // Р Р°РЅРі РїСЂРѕС†РµСЃСЃР°
-    int procSize; // РљРѕР»-РІРѕ РїСЂРѕС†РµСЃСЃРѕРІ
+    int procRank; // Ранг процесса
+    int procSize; // Кол-во процессов
 
-    float* array; // РњР°СЃСЃРёРІ РґР°РЅРЅС‹С…
-    float* partArray; // РњР°СЃСЃРёРІ РґР»СЏ СЃС‡РµС‚Р°
-    float procArraySum;
-    float globalSum;
+    float* initArray = NULL; // Массив данных
+    float* partArray; // Массив для счета
+
+    float procArraySum; // Подсчитанное процессом
+    float globalSum; // Общая сумма
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &procRank);
     MPI_Comm_size(MPI_COMM_WORLD, &procSize);
 
-    int arrSize = procSize * 100; // РљРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ РјР°СЃСЃРёРІРµ
-    int partArraySize = arrSize / procSize;
+    int initArraySize = procSize * 1000; // Количество элементов в массиве
+    int partArraySize = initArraySize / procSize; // Количество элементов для части массива
 
     if (procRank == 0)
     {
         startTime = MPI_Wtime();
 
-        array = CreateArrayWithGenarg(arrSize);
+        initArray = CreateArrayWithGenarg(initArraySize);
+
+        printf("Init count avg: %f\n", average_pairs(initArray, initArraySize));
     }
 
-    partArray = malloc(sizeof(float) * partArraySize); 
-    
-    // Р Р°СЃСЃС‹Р»РєР° С‡Р°СЃС‚РµР№ РјР°СЃСЃРёРІР°
-    MPI_Scatter(array, partArraySize, MPI_FLOAT, partArray, partArraySize, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    // Инициализация массива, в котором будет часть исходного массива
+    partArray = malloc(sizeof(float) * partArraySize);
 
+    // Рассылка частей массива
+    MPI_Scatter(initArray, partArraySize, MPI_FLOAT, partArray, partArraySize, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    // Подсчет
     procArraySum = average_pairs(partArray, partArraySize);
     printf("Proccess %d has counted: %f\n", procRank, procArraySum);
 
-    float* totalProcArraySum = NULL;
-
+    // Массив хранения средних значений частей массива
+    float* totalProcArraySum = NULL; 
     if (procRank == 0)
         totalProcArraySum = malloc(sizeof(float) * procSize);
 
+    // Отправка в totalProcArraySum
     MPI_Gather(&procArraySum, 1, MPI_FLOAT, totalProcArraySum, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
     free(partArray);
@@ -107,7 +113,7 @@ int main(int argc, char* argv[])
         printf("Sum of all pairs: %f\n", totalSum);
         printf("Time wasted: %f\n", endTime - startTime);
 
-        free(array);
+        free(initArray);
         free(totalProcArraySum);
     }
 
