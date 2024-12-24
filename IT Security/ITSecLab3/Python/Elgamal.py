@@ -41,6 +41,24 @@ class ElGamal:
 
     def generate_private_key(self):
         return random.randint(1, self.p - 1)
+    
+    def create_number_for_encryption(self, number:str, key:int):
+        number_for_encryption = []
+        step = 0
+        for i in range(1, len(number)):
+            if int(number[step:i]) < key and int(number[step:(i + 1)]) > key:
+                if int(number[i]) == 0:
+                    number_for_encryption.append(number[step:i - 1])
+                    step = i - 2
+                    i -=1
+                else:
+                    number_for_encryption.append(number[step:i])
+                    step = i
+            elif i + 2 >= len(number):
+                number_for_encryption.append(number[step:])
+                break
+
+        return number_for_encryption                
 
     def encrypt(self, message, public_key):
         y_key = public_key[0]
@@ -48,31 +66,34 @@ class ElGamal:
         p_key = public_key[2]
 
         message = message.upper()
-        message_in_coding = []
+        message_in_coding = ""
 
         # Из букв в кодировку
         for letter in message:
             if letter in self.russian_dictionary:
-                message_in_coding.append(self.russian_dictionary[letter])
+                message_in_coding += str(self.russian_dictionary[letter])
             elif letter in self.english_dictionary:
-                message_in_coding.append(self.english_dictionary[letter])
+                message_in_coding += str(self.english_dictionary[letter])
             elif letter in self.special_symbols_encoding:
-                message_in_coding.append(self.special_symbols_encoding[letter])
+                message_in_coding += str(self.special_symbols_encoding[letter])
 
         session_key = random.randint(1, p_key - 1)  # Сессионный ключ
         cipher_text = ""
 
-        for value in message_in_coding:
+        for_encryption = self.create_number_for_encryption(message_in_coding, p_key)
+
+        for value in for_encryption:
             a = self.power(g_key, session_key) % p_key
             cipher_text += str(a) + ' '
 
-            b = (value * self.power(y_key, session_key))% p_key
+            b = (int(value) * self.power(y_key, session_key))% p_key
             cipher_text += str(b) + ' '
 
         return cipher_text
     
     def decrypt(self, message, public_key):
         decrypted_message = []
+        decrypted_buffer = ""
         decrypted_message_in_coding = ""
         p_key = public_key[2]
 
@@ -84,8 +105,12 @@ class ElGamal:
 
             function = b * (pow(helper, p_key - 2) % p_key) % p_key
 
-            decrypted_message.append(function)
+            decrypted_buffer += str(function)
         
+        for i in range(0, len(decrypted_buffer), 2):
+            pair = decrypted_buffer[i:i+2]
+            decrypted_message.append(int(pair))
+
         for number in decrypted_message:
             if number in self.russian_dictionary.values():
                 decrypted_message_in_coding += str(get_key(self.russian_dictionary, number))
