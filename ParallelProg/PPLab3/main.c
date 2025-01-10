@@ -1,125 +1,107 @@
-// Var 6 - Выбрать нечетные столбцы матрицы. (if colums % 2 != 0 => add(colList, colums)
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 #include "mpi.h"
 
-#pragma region BasicMatrixFuncions
-
-/// <summary>
-/// Вывод матрицы в консоль
-/// </summary>
-/// <param name="matrix">Матрица</param>
-/// <param name="rows">Количество строк</param>
-/// <param name="columns">Количество столбцов</param>
-void PrintMatrix(int* matrix, int rows, int columns)
+void PrintMatrix(int* matrix, int rows, int columns, int procRank)
 {
+    printf("Process %d\nMatrix is:\n", procRank);
     for (int i = 0; i < rows * columns; i++)
     {
-        if (i % rows == 0)
+        if (i % columns == 0)
             printf("\n");
 
-        printf("%d ", matrix[i]);
+        printf(" %d ", matrix[i]);
     }
 
-    printf("\n");
+    printf("\n\n");
 }
 
-/// <summary>
-/// Очистка памяти матрицы
-/// </summary>
-/// <param name="matrix">Матрица</param>
-/// <param name="rows">Количество строк</param>
-void KillMatrix(int* matrix)
-{
-    free(matrix);
-}
-
-#pragma endregion
-
-/// <summary>
-/// Создание матрицы случайных чисел
-/// </summary>
-/// <param name="rows">Количество строк</param>
-/// <param name="columns">Количество столбцов</param>
-/// <returns>Матрица случайных чисел</returns>
 void CreateMatrixWithIntNums(int* matrix, int rows, int columns)
 {
-
     for (int i = 0; i < rows * columns; i++)
-        //matrix[i][j] = (float)rand() / (RAND_MAX * 2.0f);
-        matrix[i] = i;
+        matrix[i] = i + 1;
 }
 
-/// <summary>
-/// Обнуление матрицы
-/// </summary>
-/// <param name="matrix">Исходная матрица</param>
-/// <param name="rows">Количество строк</param>
-/// <param name="columns">Количество столбцов</param>
-int* nullMatrix(int* matrix, int rows, int columns)
+void BuildVectorType(int rows, int cols, MPI_Datatype* messageType)
 {
-    for (int i = 0; i < rows * columns; i++)
-        matrix[i] = 0;
+    int oddCount = (rows * cols) / 2; // Количество нечетных столбцов
+    int blocklength = 1; // Количество элементов в каждом блоке
+    int stride = 2; // Шаг между блоками (нечетные столбцы)
 
-    return matrix;
+    // Создаем производный тип данных для нечетных столбцов
+    MPI_Type_vector(oddCount, blocklength, stride, MPI_INT, messageType);
+    MPI_Type_commit(messageType);
+}
+
+void ReloadMatrix(int** matrix, int size)
+{
+    free(*matrix);
+
+    *matrix = (int*)calloc(size, sizeof(int));
 }
 
 int main(int argc, char* argv[])
 {
-    // Переменные времени
-    //double startTime, endTime;
-
     int procRank; // Ранг процесса
     int procSize; // Кол-во процессов
 
-    const int rows = 10, cols = 10;
+    const int rows = 10, cols = 10; // Количество строк и столбцов
     int matrixSize = rows * cols;
-
-    int* firstMatrix = (int*)malloc(sizeof(int) * (rows * cols));    
 
     MPI_Status stats;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &procRank);
     MPI_Comm_size(MPI_COMM_WORLD, &procSize);
 
-    // Проверка на 2 процесса
-    if (procSize > 2)
-    {
-        printf("Program created to work with 2 processes!\n");
-        MPI_Finalize();
-        return -1;
-    }
+    MPI_Datatype oddCols;
+
+    BuildVectorType(rows, cols, &oddCols);
+
+    int* intMatrix = (int*)calloc(matrixSize, sizeof(int));
+    int* nulledMatrix = (int*)calloc(matrixSize, sizeof(int));
 
     if (procRank == 0)
     {
-        CreateMatrixWithIntNums(firstMatrix, rows, cols);
+        /* Инициализируем и отправляем матрицу целых чисел для обнуления */
+        CreateMatrixWithIntNums(intMatrix, rows, cols);
 
-        printf("Process %d\nMatrix is:\n", procRank);
-        PrintMatrix(firstMatrix, rows, cols);
-        printf("\n");
+        PrintMatrix(intMatrix, rows, cols, procRank);
 
-        MPI_Send(firstMatrix, matrixSize, MPI_INT, 1, 0, MPI_COMM_WORLD);
+        /* Отправляем матрицу целых чисел 2 раза */
+        MPI_Send(intMatrix, 1, oddCols, 1, 0, MPI_COMM_WORLD); // Для принятия производным типом данных
+        MPI_Send(intMatrix, 1, oddCols, 1, 1, MPI_COMM_WORLD); // Для принятия базовым типом данных
+
+        //ReloadMatrix(&intMatrix, matrixSize);
+        //MPI_Recv(intMatrix, 1, oddCols, 1, 2, MPI_COMM_WORLD, &stats);
+
+        //PrintMatrix(intMatrix, rows, cols, procRank);
     }
 
     if (procRank == 1)
     {
-        // Получаем от 0 процесса матрицу
-        MPI_Recv(firstMatrix, matrixSize, MPI_INT, 0, 0, MPI_COMM_WORLD, &stats);
+        /* Получаем матрицу производным типом данных */
+        MPI_Recv(nulledMatrix, 1, oddCols, 0, 0, MPI_COMM_WORLD, &stats);
 
-        printf("Process %d\n", procRank);
+        printf("MPI Vector:\n");
+        PrintMatrix(nulledMatrix, rows, cols, procRank);
 
-        printf("Nulling matrix...\n");
-        printf("\n");
+        /* Получаем матрицу базовым типом данных */
 
-        firstMatrix = nullMatrix(firstMatrix, rows, cols);
+        ReloadMatrix(&nulledMatrix, matrixSize);
+        MPI_Recv(nulledMatrix, matrixSize, MPI_INT, 0, 1, MPI_COMM_WORLD, &stats);
 
-        printf("Matrix is nulled! Printing...\n");
-        PrintMatrix(firstMatrix, rows, cols);
+        printf("INT:\n");
+        PrintMatrix(nulledMatrix, rows, cols, procRank);
+
+        /* Отправляем матрицу базовым типом данных */
+        //ReloadMatrix(&nulledMatrix, matrixSize);
+        //CreateMatrixWithIntNums(nulledMatrix, rows, cols);
+        //MPI_Send(nulledMatrix, matrixSize, MPI_INT, 0, 2, MPI_COMM_WORLD);
     }
 
-    KillMatrix(firstMatrix);
-       
+    free(intMatrix);
+    free(nulledMatrix);
+    MPI_Type_free(&oddCols);
     MPI_Finalize();
 
     return 0;
