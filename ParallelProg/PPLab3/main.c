@@ -7,10 +7,12 @@ void PrintMatrix(int* matrix, int rows, int columns, int procRank)
     printf("Process %d\nMatrix is:\n", procRank);
     for (int i = 0; i < rows * columns; i++)
     {
-        if (i % columns == 0)
-            printf("\n");
-
-        printf(" %d ", matrix[i]);
+        if (matrix[i] != 0)
+        {
+            if (i % columns == 0)
+                printf("\n");
+            printf(" %d ", matrix[i]);
+        }
     }
 
     printf("\n\n");
@@ -24,7 +26,7 @@ void CreateMatrixWithIntNums(int* matrix, int rows, int columns)
 
 void BuildVectorType(int rows, int cols, MPI_Datatype* messageType)
 {
-    int oddCount = (rows * cols) / 2; // Количество нечетных столбцов
+    int oddCount = (rows * cols) / 2; // Количество нечетных элементов
     int blocklength = 1; // Количество элементов в каждом блоке
     int stride = 2; // Шаг между блоками (нечетные столбцы)
 
@@ -45,15 +47,15 @@ int main(int argc, char* argv[])
     int procRank; // Ранг процесса
     int procSize; // Кол-во процессов
 
-    const int rows = 10, cols = 10; // Количество строк и столбцов
-    int matrixSize = rows * cols;
-
-    MPI_Status stats;
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &procRank);
     MPI_Comm_size(MPI_COMM_WORLD, &procSize);
 
+    const int rows = 10, cols = 10; // Количество строк и столбцов
+    int matrixSize = rows * cols;
+
     MPI_Datatype oddCols;
+    MPI_Status stats;
 
     BuildVectorType(rows, cols, &oddCols);
 
@@ -71,10 +73,11 @@ int main(int argc, char* argv[])
         MPI_Send(intMatrix, 1, oddCols, 1, 0, MPI_COMM_WORLD); // Для принятия производным типом данных
         MPI_Send(intMatrix, 1, oddCols, 1, 1, MPI_COMM_WORLD); // Для принятия базовым типом данных
 
-        //ReloadMatrix(&intMatrix, matrixSize);
-        //MPI_Recv(intMatrix, 1, oddCols, 1, 2, MPI_COMM_WORLD, &stats);
+        ReloadMatrix(&intMatrix, matrixSize);
+        MPI_Recv(intMatrix, 1, oddCols, 1, 2, MPI_COMM_WORLD, &stats);
 
-        //PrintMatrix(intMatrix, rows, cols, procRank);
+        printf("Recived from 1:\n\n");
+        PrintMatrix(intMatrix, rows, cols, procRank);
     }
 
     if (procRank == 1)
@@ -82,7 +85,7 @@ int main(int argc, char* argv[])
         /* Получаем матрицу производным типом данных */
         MPI_Recv(nulledMatrix, 1, oddCols, 0, 0, MPI_COMM_WORLD, &stats);
 
-        printf("MPI Vector:\n");
+        printf("Recived by oddCols:\n");
         PrintMatrix(nulledMatrix, rows, cols, procRank);
 
         /* Получаем матрицу базовым типом данных */
@@ -90,18 +93,23 @@ int main(int argc, char* argv[])
         ReloadMatrix(&nulledMatrix, matrixSize);
         MPI_Recv(nulledMatrix, matrixSize, MPI_INT, 0, 1, MPI_COMM_WORLD, &stats);
 
-        printf("INT:\n");
+        printf("Recived by INT:\n");
         PrintMatrix(nulledMatrix, rows, cols, procRank);
 
-        /* Отправляем матрицу базовым типом данных */
-        //ReloadMatrix(&nulledMatrix, matrixSize);
-        //CreateMatrixWithIntNums(nulledMatrix, rows, cols);
-        //MPI_Send(nulledMatrix, matrixSize, MPI_INT, 0, 2, MPI_COMM_WORLD);
+        int newCount = 0;
+        for (int i = 0; i < matrixSize; i++)
+        {
+            if (nulledMatrix[i] != 0)
+                newCount++;
+        }
+
+        MPI_Send(nulledMatrix, newCount, MPI_INT, 0, 2, MPI_COMM_WORLD);
     }
 
     free(intMatrix);
     free(nulledMatrix);
     MPI_Type_free(&oddCols);
+
     MPI_Finalize();
 
     return 0;
