@@ -1,125 +1,174 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
+using System.Text.RegularExpressions;
 
 public class DeterministicFiniteAutomatonWithStack
 {
-    // Определяем состояния автомата
-    private enum State
+    public DeterministicFiniteAutomatonWithStack(string path)
     {
-        Initial,
-        State1,
-        State2
+        _filePath = path;
     }
 
-    // Определяем символы входного алфавита
-    private enum Symbol
+    /// <summary>
+    /// Проверка на вхождение символа в алфавит
+    /// </summary>
+    /// <param name="symbol">Символ</param>
+    /// <returns>Часть алфавита, которой принадлежит</returns>
+    private string MatchSymbol(char symbol)
     {
-        A,
-        B
+        foreach (var regex in _alphabet)
+            if (Regex.IsMatch(symbol.ToString(), regex))
+                return regex;
+
+        return null;
     }
 
-    // Определяем действия автомата
-    private enum Action
+    /// <summary>
+    /// Обработка стека
+    /// </summary>
+    private void StackProcessing(_states state, char symbol)
     {
-        Accept,
-        Reject
+        if (state == _states.q5)
+        {
+            if (symbol == '(')
+                _stack.Push(symbol);
+            else if (symbol == ')')
+                _stack.Pop();
+        }        
     }
 
-    // Определяем стек
-    private Stack<Symbol> stack = new Stack<Symbol>();
+    public bool Run(string str)
+    {
+        _states state = _states.q0;
 
-    // Определяем текущее состояние
-    private State currentState = State.Initial;
+        for (int i = 0; i < str.Length; i++)
+        {
+            char symbol = str[i];
+            string matched = MatchSymbol(symbol);
 
-    // Определяем таблицу переходов
-    private Dictionary<State, Dictionary<Symbol, State>> transitionTable = new Dictionary<State, Dictionary<Symbol, State>>
+            if (matched == null)
+            {
+                File.WriteAllText(_filePath, "Строка введена некорректно");
+                return false;
+            }
+
+            if (_transitionTable[state].ContainsKey(matched))
+            {
+                state = _transitionTable[state][matched];
+
+                StackProcessing(state, symbol);
+            }
+            else
+            {
+                File.WriteAllText(_filePath, "Строка введена некорректно");
+                return false;
+            }
+        }
+
+        // Проверка на завершение
+        if (_transitionTable[state].ContainsValue(_states.HALT) && _stack.Count == 0) //state == _states.HALT
+        {
+            Console.WriteLine("Автомат завершил работу успешно.");
+            return true;
+        }
+        else
+        {
+            File.WriteAllText(_filePath, "Строка введена некорректно");
+            return false;
+        }
+    }
+
+    #region PrivateFields
+
+    private string _filePath;
+
+    // Таблица переходов
+    private Dictionary<_states, Dictionary<string, _states>> _transitionTable = new Dictionary<_states, Dictionary<string, _states>>
     {
         {
-            State.Initial, 
-            new Dictionary<Symbol, State>
+            _states.q0,
+            new Dictionary<string, _states>
             {
-                { Symbol.A, State.State1 },
-                { Symbol.B, State.State2 }
+                {_alphabet[0], _states.q1 }
             }
         },
+
         {
-            State.State1, 
-            new Dictionary<Symbol, State>
+            _states.q1,
+            new Dictionary<string, _states>
             {
-                { Symbol.A, State.State1 },
-                { Symbol.B, State.State2 }
+                {_alphabet[0], _states.q1},
+                {_alphabet[1], _states.q1},
+                {_alphabet[6], _states.q2}
             }
         },
+
         {
-            State.State2, 
-            new Dictionary<Symbol, State>
+            _states.q2,
+            new Dictionary<string, _states>
             {
-                { Symbol.A, State.State2 },
-                { Symbol.B, State.State2 }
+                {_alphabet[0], _states.q4 },
+                {_alphabet[1], _states.q3 },
+                {_alphabet[3], _states.q5 }
+            }
+        },
+
+        {
+            _states.q3,
+            new Dictionary<string, _states>
+            {
+                {_alphabet[1], _states.q3 },
+                { _alphabet[2], _states.q2 },
+                {_alphabet[5], _states.q3 },
+                { _alphabet[4], _states.q5 },
+                {"", _states.HALT}
+            }
+        },
+
+        {
+            _states.q4,
+            new Dictionary<string, _states>
+            {
+                {_alphabet[0], _states.q4 },
+                {_alphabet[1], _states.q4 },
+                {_alphabet[2], _states.q2 },
+                {_alphabet[4], _states.q5 },
+                {"", _states.HALT}
+            }
+        },
+
+        {
+            _states.q5,
+            new Dictionary<string, _states>
+            {
+                {_alphabet[0], _states.q4 },
+                {_alphabet[1], _states.q3 },
+                {_alphabet[2], _states.q2 },
+                {_alphabet[4], _states.q5 },
+                {"", _states.HALT}
             }
         }
     };
 
-    // Определяем начальное состояние автомата
-    private State InitialState { get { return State.Initial; } }
+    
+    private Stack<char> _stack = new(); // Стек(Магазин) автомата
 
-    // Определяем конечное состояние автомата
-    private Action FinalState { get { return Action.Accept; } }
-
-    // Определяем метод для добавления символа в стек
-    private void Push(Symbol symbol)
+    private enum _states // Состояния автомата
     {
-        stack.Push(symbol);
+        q0, q1, q2, q3, q4, q5, HALT
     }
 
-    // Определяем метод для удаления символа из стека
-    private Symbol Pop()
+    private static string[] _alphabet = // Алфавит автомата в РВ
     {
-        return stack.Pop();
-    }
+        "\\p{L}",
+        "\\d",
+        "[\\+\\*\\\\\\-]",
+        "\\(", "\\)",
+        "\\.",
+        "\\=",
+        "\\s"
+    };
 
-    // Определяем метод для проверки, пуст ли стек
-    private bool IsEmpty()
-    {
-        return stack.Count == 0;
-    }
-
-    // Определяем метод для перехода в новое состояние
-    private void Transition(Symbol symbol)
-    {
-        State nextState;
-        if (transitionTable.TryGetValue(currentState, out var table) && table.TryGetValue(symbol, out nextState))
-        {
-            currentState = nextState;
-        }
-        else
-        {
-            Console.WriteLine("Invalid transition");
-            Environment.Exit(1);
-        }
-    }
-
-    // Определяем метод для обработки входного символа
-    private void HandleInput(Symbol symbol)
-    {
-        Transition(symbol);
-        if (currentState == State.State2 && IsEmpty())
-        {
-            Console.WriteLine("Accepted");
-            Environment.Exit(0);
-        }
-    }
-
-    //// Определяем метод для запуска автомата
-    //public void Run(string input)
-    //{
-    //    foreach (var symbol in input)
-    //    {
-    //        if (symbol == 'A' || symbol == 'B')
-    //        {
-    //            Push(symbol);
-    //            HandleInput(symbol);
-    //        }
-    //    }
-    //}
+#endregion
 }

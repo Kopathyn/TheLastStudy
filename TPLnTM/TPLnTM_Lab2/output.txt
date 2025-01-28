@@ -1,0 +1,5 @@
+Таблица имен:
+cost : double
+price : double
+tax : double
+0.98 : const float

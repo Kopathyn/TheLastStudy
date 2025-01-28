@@ -1,22 +1,34 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using TPLnTM_Lab1;
 
-class Program
+public class Program
 {
     static void Main(string[] args)
     {
         string inputPath = @"..\..\..\input.txt";
         string outputPath = @"..\..\..\output.txt";
 
-        string variableDescription = File.ReadAllText(inputPath);
+        string str = File.ReadAllText(inputPath);
 
-        /*
-         * ...
-         * Some operations
-         * ...
-         */
+        DeterministicFiniteAutomatonWithStack DFA = new(outputPath);
 
-        File.WriteAllText(outputPath, variableDescription);
+        bool reuslt = DFA.Run(str);
 
+        if (reuslt)
+        {
+            Node node = new();
+            ExpressionTree expressionTree = new ExpressionTree();
+
+            expressionTree.ProcessExpression(node, str);
+
+            expressionTree.OutputAll(outputPath, node);
+
+
+        }
+         
         Process.Start("explorer.exe", outputPath);
     }
 }

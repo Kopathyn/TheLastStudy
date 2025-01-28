@@ -1,0 +1,38 @@
+﻿        public void GenerateAssemblyCode(Node node, StreamWriter writer)
+        {
+            if (node == null) return;
+
+            // Обработка левого поддерева
+            GenerateAssemblyCode(node.left, writer);
+            // Обработка правого поддерева
+            GenerateAssemblyCode(node.right, writer);
+
+            // Генерация кода в зависимости от типа узла
+            if (IsVariable(node.oper))
+                writer.WriteLine($"LOAD {node.oper};");
+
+            else if (node.oper == "+" || node.oper == "-")
+                writer.WriteLine($"C({node.right.oper}); STORE $l({node.level}); LOAD {node.left.oper}; ADD $l({node.level});");
+
+            else if (node.oper == "*" || node.oper == "/")
+                writer.WriteLine($"C({node.right.oper}); STORE $l({node.level}); LOAD {node.left.oper}; MPY $l({node.level});");
+        }
+
+                private int GetPriority(char operation)
+        {
+            switch (operation)
+            {
+                case '=':
+                    return 1;
+                case '+':
+                    return 2;
+                case '-':
+                    return 2;
+                case '*':
+                    return 3;
+                case '\\':
+                    return 3;
+                default:
+                    return 4;
+            }
+        }

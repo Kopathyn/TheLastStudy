@@ -1,1 +1,12 @@
-﻿
+Таблица имен:
+cost : double
+price : double
+tax : double
+0.98 : const int
+
+Неоптимизированный код:
+LOAD cost;
+LOAD price;
+LOAD tax;
+C(tax); STORE $l(0); LOAD price; ADD $l(0);
+C(0.98); STORE $l(0); LOAD +; MPY $l(0);
