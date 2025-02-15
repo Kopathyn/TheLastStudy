@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TPLnTM_Lab1;
-using System.Text.RegularExpressions;
-using System.Numerics;
-
-namespace TPLnTM_Lab1
+﻿namespace TPLnTM_Lab1
 {
     /// <summary>
     /// Узел дерева
@@ -15,7 +6,7 @@ namespace TPLnTM_Lab1
     public class Node
     {
         public string oper; // Операция
-        public int level;   // Уровень узла
+        public int level = 0;   // Уровень узла
         public Node left;   // Левое поддерево
         public Node right;  // Правое поддерево
 
@@ -41,6 +32,8 @@ namespace TPLnTM_Lab1
         /// <param name="expr">Выражение или его часть</param>
         public void ProcessExpression(Node node, string expr)
         {
+            node.level++;
+
             // Проверяем, заключено ли выражение в скобки
             if (expr[0] == '(' && expr[expr.Length - 1] == ')')
             {
@@ -101,22 +94,42 @@ namespace TPLnTM_Lab1
         /// <summary>
         /// Генерация неоптимизированного кода выражения
         /// </summary>
-        public void GenerateAssemblyCode(Node node, StreamWriter writer)
+        public void GenerateAssemblyCode(Node node, List<string> assemblyCode)
         {
             if (node == null) return;
 
-            // Обработка правого поддерева
-            GenerateAssemblyCode(node.right, writer);
-            // Обработка левого поддерева
-            GenerateAssemblyCode(node.left, writer);
-
-            if (Regex.IsMatch(node.oper, @"[\\+\\-\\\\\\*\\=]"))
-                return;
-
-            if (IsVariable(node.oper))
-                writer.WriteLine($"LOAD {node.oper}");
+            if (node.left != null && node.right != null)
+            {
+                if (node.oper == "*" || node.oper == "/")
+                {
+                    GenerateAssemblyCode(node.right, assemblyCode);
+                    assemblyCode.Add($"STORE ${node.level}");
+                    GenerateAssemblyCode(node.left, assemblyCode);
+                    assemblyCode.Add($"MPY ${node.level}");
+                }
+                else if (node.oper == "+" || node.oper == "-")
+                {
+                    GenerateAssemblyCode(node.right, assemblyCode);
+                    assemblyCode.Add($"STORE ${node.level}");
+                    GenerateAssemblyCode(node.left, assemblyCode);
+                    assemblyCode.Add($"ADD ${node.level}");
+                }
+                else if (node.oper == "=")
+                {
+                    GenerateAssemblyCode(node.right, assemblyCode);
+                    assemblyCode.Add($"STORE {node.left.oper}");
+                }
+            }
             else
-                writer.WriteLine($"LOAD ={node.oper}");
+            {
+                if (node.oper == "=" || node.oper == "+" || node.oper == "-" || node.oper == "*" || node.oper == "/")
+                    return;
+
+                if (IsVariable(node.oper))
+                    assemblyCode.Add($"LOAD {node.oper}");
+                else
+                    assemblyCode.Add($"LOAD ={node.oper}");
+            }
         }
 
         #region OutputFunctions
@@ -156,6 +169,7 @@ namespace TPLnTM_Lab1
         /// <param name="root">Корень математического дерева</param>
         public void PrintAllInfo(string filePath, Node root)
         {
+            List<string> assemblyCode = new();
             using (StreamWriter writer = new StreamWriter(filePath))
             {
                 writer.WriteLine("Дерево:\n");
@@ -166,7 +180,18 @@ namespace TPLnTM_Lab1
                     writer.WriteLine($"{variable.Key} : {variable.Value}");
 
                 writer.WriteLine("\nНеоптимизированный код:");
-                GenerateAssemblyCode(root, writer);
+
+                GenerateAssemblyCode(root, assemblyCode);
+                
+                foreach(var codeStr in assemblyCode)
+                    writer.WriteLine($"{codeStr}");
+
+                writer.WriteLine("\nОптимизированный код:");
+                List<string> assemblyOptimised = OptimizeAssemblyCode(assemblyCode);
+
+                foreach (var codeStr in assemblyOptimised)
+                    writer.WriteLine($"{codeStr}");
+
             }
         }
 

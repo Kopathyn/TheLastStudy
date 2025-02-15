@@ -1,1 +1,1 @@
-﻿x=y
+﻿cost=(price+tax)*0.98

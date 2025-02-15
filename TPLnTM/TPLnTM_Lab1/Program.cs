@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
-using TPLnTM_Lab1;
+﻿using TPLnTM_Lab1;
 
 public class Program
 {
@@ -29,6 +25,6 @@ public class Program
 
         }
          
-        Process.Start("explorer.exe", outputPath);
+        //Process.Start("explorer.exe", outputPath);
     }
 }

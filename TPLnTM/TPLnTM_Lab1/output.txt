@@ -1,12 +1,32 @@
 Дерево:
 
-    y
+        0.98
+    *
+            tax
+        +
+            price
 =
-    x
+    cost
 Таблица имен:
-x : double
-y : double
+cost : double
+price : double
+tax : double
+0.98 : const float
 
 Неоптимизированный код:
-LOAD y
-LOAD x
+LOAD =0.98
+STORE $1
+LOAD tax
+STORE $2
+LOAD price
+ADD $2
+MPY $1
+STORE cost
+
+Оптимизированный код:
+STORE $1
+STORE $2
+LOAD $2
+ADD price
+ADD $2
+MPY $1
