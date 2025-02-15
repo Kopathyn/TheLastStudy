@@ -1,4 +1,6 @@
-﻿namespace TPLnTM_Lab1
+﻿using System.Linq;
+
+namespace TPLnTM_Lab1
 {
     /// <summary>
     /// Узел дерева
@@ -34,25 +36,24 @@
         {
             node.level++;
 
-            // Проверяем, заключено ли выражение в скобки
+            /* Проверка на скобки */
+
             if (expr[0] == '(' && expr[expr.Length - 1] == ')')
             {
-                // Удаляем скобки и продолжаем обработку
                 ProcessExpression(node, expr.Substring(1, expr.Length - 2));
                 return;
             }
 
-            // Ищем операцию с наивысшим приоритетом
-            int pos = -1;
-            int priority = 4; // Начальное значение приоритета (выше, чем у всех операций)
+            /* Поиск знаков операции */
 
-            // Ищем операцию присваивания, сложения и умножения
+            int pos = -1; // Позиция операции
+            int priority = 4; // Приоритет операции
+
             for (int i = 0; i < expr.Length; i++)
             {
                 char currentChar = expr[i];
                 int currentPriority = GetPriority(currentChar);
 
-                // Проверяем, не заключен ли знак операции в скобки
                 if (currentPriority < priority && !IsInsideBrackets(expr, i))
                 {
                     pos = i;
@@ -60,20 +61,17 @@
                 }
             }
 
-            // Если операция найдена
             if (pos != -1)
             {
                 node.oper = expr[pos].ToString();
                 node.left = new Node();
                 node.right = new Node();
 
-                // Рекурсивно обрабатываем левую и правую части
                 ProcessExpression(node.left, expr.Substring(0, pos));
                 ProcessExpression(node.right, expr.Substring(pos + 1));
             }
             else
             {
-                // Если операция не найдена, это лист дерева
                 node.oper = expr;
 
                 if (IsVariable(expr))
@@ -92,12 +90,13 @@
         }
 
         /// <summary>
-        /// Генерация неоптимизированного кода выражения
+        /// Генерация кода для мат. выражения
         /// </summary>
         public void GenerateAssemblyCode(Node node, List<string> assemblyCode)
         {
             if (node == null) return;
 
+            // Обработка вершин
             if (node.left != null && node.right != null)
             {
                 if (node.oper == "*" || node.oper == "/")
@@ -120,7 +119,7 @@
                     assemblyCode.Add($"STORE {node.left.oper}");
                 }
             }
-            else
+            else // Обработка листьев
             {
                 if (node.oper == "=" || node.oper == "+" || node.oper == "-" || node.oper == "*" || node.oper == "/")
                     return;
@@ -132,12 +131,73 @@
             }
         }
 
-        #region OutputFunctions
+        /// <summary>
+        /// Оптимизация сгенерированного кода
+        /// </summary>
+        public void OptimizeCode(List<string> instructions)
+        {
+            for (int i = 0; i < instructions.Count; i++)
+            {
+                string current = instructions[i];
+
+                // Проверка на коммутативность для операций + и *
+                if (current.StartsWith("LOAD") && i + 1 < instructions.Count)
+                {
+                    string next = instructions[i + 1];
+                    if (next.StartsWith("ADD") || next.StartsWith("MPY"))
+                    {
+                        string loadValue = current.Split(' ')[1];
+                        string operationValue = next.Split(' ')[1];
+                        string newCurrent = $"LOAD {operationValue}";
+                        string newNext = $"{next.Split(' ')[0]} {loadValue}";
+                        instructions[i] = newCurrent;
+                        instructions[i + 1] = newNext;
+                        i++; // Переходим к следующей паре команд
+                    }
+                }
+
+                // Удаление последовательности STORE α; LOAD α;
+                if (current.StartsWith("STORE") && i + 1 < instructions.Count)
+                {
+                    string next = instructions[i + 1];
+                    if (next.StartsWith("LOAD") && current.Split(' ')[1] == next.Split(' ')[1])
+                    {
+                        instructions.RemoveAt(i); // Удаляем STORE
+                        instructions.RemoveAt(i); // Удаляем LOAD
+                        i--; // Корректируем индекс после удаления
+                    }
+                }
+
+                // Удаление последовательности LOAD α; STORE β;
+                if (current.StartsWith("LOAD") && i + 1 < instructions.Count)
+                {
+                    string next = instructions[i + 1];
+                    if (next.StartsWith("STORE") && i + 2 < instructions.Count && instructions[i + 2].StartsWith("LOAD"))
+                    {
+                        string loadValue = current.Split(' ')[1];
+                        string storeValue = next.Split(' ')[1];
+                        // Заменяем все вхождения storeValue на loadValue
+                        for (int j = i + 2; j < instructions.Count; j++)
+                        {
+                            if (instructions[j].Contains(storeValue))
+                            {
+                                instructions[j] = instructions[j].Replace(storeValue, loadValue);
+                            }
+                        }
+                        instructions.RemoveAt(i); // Удаляем LOAD
+                        instructions.RemoveAt(i); // Удаляем STORE
+                        i--; // Корректируем индекс после удаления
+                    }
+                }
+            }
+        }
+
+            #region OutputFunctions
 
         /// <summary>
         /// Вывод дерева в файл
         /// </summary>
-        public void PrintTreeToFile(Node node, StreamWriter writer, int level)
+            public void PrintTreeToFile(Node node, StreamWriter writer, int level)
         {
             if (node == null) return;
 
@@ -182,16 +242,16 @@
                 writer.WriteLine("\nНеоптимизированный код:");
 
                 GenerateAssemblyCode(root, assemblyCode);
-                
-                foreach(var codeStr in assemblyCode)
+
+                foreach (var codeStr in assemblyCode)
                     writer.WriteLine($"{codeStr}");
 
                 writer.WriteLine("\nОптимизированный код:");
-                List<string> assemblyOptimised = OptimizeAssemblyCode(assemblyCode);
 
-                foreach (var codeStr in assemblyOptimised)
+                OptimizeCode(assemblyCode);
+
+                foreach (var codeStr in assemblyCode)
                     writer.WriteLine($"{codeStr}");
-
             }
         }
 
@@ -211,15 +271,15 @@
             switch (operation)
             {
                 case '=':
-                    return 1; 
+                    return 1;
                 case '+':
-                    return 2; 
+                    return 2;
                 case '-':
-                    return 2; 
+                    return 2;
                 case '*':
-                    return 3; 
+                    return 3;
                 case '\\':
-                    return 3; 
+                    return 3;
                 default:
                     return 4;
             }
