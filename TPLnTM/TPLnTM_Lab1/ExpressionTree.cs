@@ -5,15 +5,19 @@ using System.Text;
 using System.Threading.Tasks;
 using TPLnTM_Lab1;
 using System.Text.RegularExpressions;
+using System.Numerics;
 
 namespace TPLnTM_Lab1
 {
+    /// <summary>
+    /// Узел дерева
+    /// </summary>
     public class Node
     {
         public string oper; // Операция
+        public int level;   // Уровень узла
         public Node left;   // Левое поддерево
         public Node right;  // Правое поддерево
-        public int level;   // Уровень узла
 
         public Node()
         {
@@ -22,22 +26,19 @@ namespace TPLnTM_Lab1
         }
     }
 
-    public class VariableInfo
-    {
-        public string Name { get; set; }
-        public string Type { get; set; }
-
-        public VariableInfo(string name, string type)
-        {
-            Name = name;
-            Type = type;
-        }
-    }
-
+    /// <summary>
+    /// Класс преобразования математического выражения в дерево
+    /// </summary>
     public class ExpressionTree
     {
-        private HashSet<VariableInfo> variableTable = new HashSet<VariableInfo>();
 
+        #region PublicFunctions
+
+        /// <summary>
+        /// Обработка выражения
+        /// </summary>
+        /// <param name="node">Узел дерева</param>
+        /// <param name="expr">Выражение или его часть</param>
         public void ProcessExpression(Node node, string expr)
         {
             // Проверяем, заключено ли выражение в скобки
@@ -82,17 +83,14 @@ namespace TPLnTM_Lab1
                 // Если операция не найдена, это лист дерева
                 node.oper = expr;
 
-                // Добавляем переменную в таблицу имен
                 if (IsVariable(expr))
-                {
-                    variableTable.Add(new VariableInfo(expr, "double"));
-                }
+                    _variableTable.Add(expr, "double");
                 else
                 {
-                    if (expr.Contains('.') && Regex.IsMatch(expr, @"\\d"))
-                        variableTable.Add(new VariableInfo(expr, "const float"));
+                    if (expr.Contains('.'))
+                        _variableTable.Add(expr, "const float");
                     else
-                        variableTable.Add(new VariableInfo(expr, "const int"));
+                        _variableTable.Add(expr, "const int");
                 }
 
                 node.left = null;
@@ -100,6 +98,89 @@ namespace TPLnTM_Lab1
             }
         }
 
+        /// <summary>
+        /// Генерация неоптимизированного кода выражения
+        /// </summary>
+        public void GenerateAssemblyCode(Node node, StreamWriter writer)
+        {
+            if (node == null) return;
+
+            // Обработка правого поддерева
+            GenerateAssemblyCode(node.right, writer);
+            // Обработка левого поддерева
+            GenerateAssemblyCode(node.left, writer);
+
+            if (Regex.IsMatch(node.oper, @"[\\+\\-\\\\\\*\\=]"))
+                return;
+
+            if (IsVariable(node.oper))
+                writer.WriteLine($"LOAD {node.oper}");
+            else
+                writer.WriteLine($"LOAD ={node.oper}");
+        }
+
+        #region OutputFunctions
+
+        /// <summary>
+        /// Вывод дерева в файл
+        /// </summary>
+        public void PrintTreeToFile(Node node, StreamWriter writer, int level)
+        {
+            if (node == null) return;
+
+            PrintTreeToFile(node.right, writer, level + 1);
+            writer.WriteLine(new string(' ', level * 4) + node.oper);
+            PrintTreeToFile(node.left, writer, level + 1);
+        }
+
+        /// <summary>
+        /// Вывод таблицы имен в файл
+        /// </summary>
+        /// <param name="filePath">Путь до файла куда записывать</param>
+        public void PrintVariableTableToFile(string filePath)
+        {
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("Таблица имен:");
+                foreach (var variable in _variableTable)
+                {
+                    writer.WriteLine($"{variable.Key} : {variable.Value}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Объединение всех выводов в один
+        /// </summary>
+        /// <param name="filePath">Путь к файлу</param>
+        /// <param name="root">Корень математического дерева</param>
+        public void PrintAllInfo(string filePath, Node root)
+        {
+            using (StreamWriter writer = new StreamWriter(filePath))
+            {
+                writer.WriteLine("Дерево:\n");
+                PrintTreeToFile(root, writer, 0);
+
+                writer.WriteLine("Таблица имен:");
+                foreach (var variable in _variableTable)
+                    writer.WriteLine($"{variable.Key} : {variable.Value}");
+
+                writer.WriteLine("\nНеоптимизированный код:");
+                GenerateAssemblyCode(root, writer);
+            }
+        }
+
+        #endregion
+
+        #endregion
+
+        #region PrivateFunctions
+
+        /// <summary>
+        /// Получение приоритета мат. знака
+        /// </summary>
+        /// <param name="operation">Мат. знак</param>
+        /// <returns>Значение приоритета</returns>
         private int GetPriority(char operation)
         {
             switch (operation)
@@ -119,6 +200,11 @@ namespace TPLnTM_Lab1
             }
         }
 
+        /// <summary>
+        /// Проверка на то, является ли выражение в скобках
+        /// </summary>
+        /// <param name="expr">Выражение</param>
+        /// <param name="index">Индекс, до какого необходимо проверить</param>
         private bool IsInsideBrackets(string expr, int index)
         {
             int openBrackets = 0;
@@ -130,69 +216,19 @@ namespace TPLnTM_Lab1
             return openBrackets > 0;
         }
 
+        /// <summary>
+        /// Проверка на то, являелся ли подстрока переменной
+        /// </summary>
+        /// <param name="expr">Строка или продстрока</param>
         private bool IsVariable(string expr)
         {
             // Проверяем, является ли выражение идентификатором переменной
             return !string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]);
         }
 
-        public void PrintTreeToFile(Node node, StreamWriter writer, int level)
-        {
-            if (node == null) return;
+        #endregion
 
-            PrintTreeToFile(node.right, writer, level + 1);
-            writer.WriteLine(new string(' ', level * 4) + node.oper);
-            PrintTreeToFile(node.left, writer, level + 1);
-        }
+        private Dictionary<string, string> _variableTable = new Dictionary<string, string>(); // Таблица имен
 
-        public void PrintVariableTableToFile(string filePath)
-        {
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                writer.WriteLine("Таблица имен:");
-                foreach (var variable in variableTable)
-                {
-                    writer.WriteLine($"{variable.Name} : {variable.Type}");
-                }
-            }
-        }
-
-        public void GenerateAssemblyCode(Node node, StreamWriter writer)
-        {
-            if (node == null) return;
-
-            // Обработка левого поддерева
-            GenerateAssemblyCode(node.left, writer);
-            // Обработка правого поддерева
-            GenerateAssemblyCode(node.right, writer);
-
-            // Генерация кода в зависимости от типа узла
-            if (IsVariable(node.oper))
-                writer.WriteLine($"LOAD {node.oper};");
-
-            else if (!IsVariable(node.oper) && Regex.IsMatch(node.oper, @"\\d"))
-                writer.WriteLine($"LOAD ={node.oper}");
-
-            else if (node.oper == "+" || node.oper == "-")
-                writer.WriteLine($"C({node.right.oper}); STORE $l({node.level}); LOAD {node.left.oper}; ADD $l({node.level});");
-
-            else if (node.oper == "*" || node.oper == "/")
-                writer.WriteLine($"C({node.right.oper}); STORE $l({node.level}); LOAD {node.left.oper}; MPY $l({node.level});");
-    }
-
-        public void OutputAll(string filePath, Node root)
-        {
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                writer.WriteLine("Таблица имен:");
-                foreach (var variable in variableTable)
-                {
-                    writer.WriteLine($"{variable.Name} : {variable.Type}");
-                }
-
-                writer.WriteLine("\nНеоптимизированный код:");
-                GenerateAssemblyCode(root, writer);
-            }
-        }
     }
 }

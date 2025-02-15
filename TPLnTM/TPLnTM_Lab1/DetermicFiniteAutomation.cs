@@ -38,6 +38,14 @@ public class DeterministicFiniteAutomatonWithStack
         }        
     }
 
+    /// <summary>
+    /// Запуск ДМПА
+    /// </summary>
+    /// <param name="str">Строка</param>
+    /// <returns>
+    /// true - успешное завершение
+    /// false - завершение с ошибкой
+    /// </returns>
     public bool Run(string str)
     {
         _states state = _states.q0;
@@ -45,35 +53,38 @@ public class DeterministicFiniteAutomatonWithStack
         for (int i = 0; i < str.Length; i++)
         {
             char symbol = str[i];
-            string matched = MatchSymbol(symbol);
+            string matchedAlphabet = MatchSymbol(symbol);
 
-            if (matched == null)
+            if (matchedAlphabet == null)
             {
+                Console.WriteLine("Автомат завершил работу с ошибкой.");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
                 return false;
             }
 
-            if (_transitionTable[state].ContainsKey(matched))
+            if (_transitionTable[state].ContainsKey(matchedAlphabet))
             {
-                state = _transitionTable[state][matched];
+                state = _transitionTable[state][matchedAlphabet];
 
                 StackProcessing(state, symbol);
             }
             else
             {
+                Console.WriteLine("Автомат завершил работу с ошибкой.");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
                 return false;
             }
         }
 
         // Проверка на завершение
-        if (_transitionTable[state].ContainsValue(_states.HALT) && _stack.Count == 0) //state == _states.HALT
+        if (_transitionTable[state].ContainsValue(_states.HALT) && _stack.Count == 0)
         {
             Console.WriteLine("Автомат завершил работу успешно.");
             return true;
         }
         else
         {
+            Console.WriteLine("Автомат завершил работу с ошибкой.");
             File.WriteAllText(_filePath, "Строка введена некорректно");
             return false;
         }
@@ -120,8 +131,8 @@ public class DeterministicFiniteAutomatonWithStack
             {
                 {_alphabet[1], _states.q3 },
                 { _alphabet[2], _states.q2 },
-                {_alphabet[5], _states.q3 },
                 { _alphabet[4], _states.q5 },
+                {_alphabet[5], _states.q3 },
                 {"", _states.HALT}
             }
         },
@@ -151,15 +162,17 @@ public class DeterministicFiniteAutomatonWithStack
         }
     };
 
-    
-    private Stack<char> _stack = new(); // Стек(Магазин) автомата
+    // Стек(Магазин) автомата
+    private Stack<char> _stack = new(); 
 
-    private enum _states // Состояния автомата
+    // Состояния автомата
+    private enum _states 
     {
         q0, q1, q2, q3, q4, q5, HALT
     }
 
-    private static string[] _alphabet = // Алфавит автомата в РВ
+    // Алфавит автомата в РВ
+    private static string[] _alphabet = 
     {
         "\\p{L}",
         "\\d",

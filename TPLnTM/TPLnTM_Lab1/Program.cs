@@ -24,7 +24,7 @@ public class Program
 
             expressionTree.ProcessExpression(node, str);
 
-            expressionTree.OutputAll(outputPath, node);
+            expressionTree.PrintAllInfo(outputPath, node);
 
 
         }
