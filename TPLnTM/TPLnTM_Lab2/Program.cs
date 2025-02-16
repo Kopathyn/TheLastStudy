@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text.RegularExpressions;
+﻿using System.Diagnostics;
 using TPLnTM_Lab2;
 
 class Program
@@ -22,13 +19,7 @@ class Program
 
             expressionTree.ProcessExpression(node, input);
 
-            //using (StreamWriter writer = new StreamWriter(outputPath))
-            //{
-            //    writer.WriteLine("Дерево имен");
-            //    expressionTree.PrintTreeToFile(node, writer, 0);
-            //}
-
-            expressionTree.PrintVariableTableToFile(outputPath);
+            expressionTree.PrintAllInfo(outputPath, node);
         }
         else
         {
