@@ -1,4 +1,5 @@
-﻿using TPLnTM_Lab1;
+﻿using System.Diagnostics;
+using TPLnTM_Lab1;
 
 public class Program
 {
@@ -24,7 +25,7 @@ public class Program
 
 
         }
-         
-        //Process.Start("explorer.exe", outputPath);
+
+        Process.Start("explorer.exe", outputPath);
     }
 }

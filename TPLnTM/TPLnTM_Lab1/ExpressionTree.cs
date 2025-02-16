@@ -134,92 +134,77 @@ namespace TPLnTM_Lab1
         /// <summary>
         /// Оптимизация сгенерированного кода
         /// </summary>
-        public void OptimizeCode(List<string> instructions)
+        public void OptimizeAssemblyCode(List<string> assemblyCode)
         {
-            for (int i = 0; i < instructions.Count; i++)
+            for (int i = 0; i < assemblyCode.Count; i++)
             {
-                string current = instructions[i];
+                string current = assemblyCode[i];
 
-                // Проверка на коммутативность для операций + и *
-                if (current.StartsWith("LOAD") && i + 1 < instructions.Count)
+                // Правила 1 и 2
+                if (current.StartsWith("LOAD") && i + 1 < assemblyCode.Count)
                 {
-                    string next = instructions[i + 1];
+                    string next = assemblyCode[i + 1];
                     if (next.StartsWith("ADD") || next.StartsWith("MPY"))
                     {
                         string loadValue = current.Split(' ')[1];
                         string operationValue = next.Split(' ')[1];
                         string newCurrent = $"LOAD {operationValue}";
                         string newNext = $"{next.Split(' ')[0]} {loadValue}";
-                        instructions[i] = newCurrent;
-                        instructions[i + 1] = newNext;
-                        i++; // Переходим к следующей паре команд
+                        assemblyCode[i] = newCurrent;
+                        assemblyCode[i + 1] = newNext;
+                        i++;
                     }
                 }
 
-                // Удаление последовательности STORE α; LOAD α;
-                if (current.StartsWith("STORE") && i + 1 < instructions.Count)
+                // Правило 3
+                if (current.StartsWith("STORE") && i + 1 < assemblyCode.Count)
                 {
-                    string next = instructions[i + 1];
+                    string next = assemblyCode[i + 1];
                     if (next.StartsWith("LOAD") && current.Split(' ')[1] == next.Split(' ')[1])
                     {
-                        instructions.RemoveAt(i); // Удаляем STORE
-                        instructions.RemoveAt(i); // Удаляем LOAD
-                        i--; // Корректируем индекс после удаления
+                        assemblyCode.RemoveAt(i);
+                        assemblyCode.RemoveAt(i);
+                        i--;
                     }
                 }
 
-                // Удаление последовательности LOAD α; STORE β;
-                if (current.StartsWith("LOAD") && i + 1 < instructions.Count)
+                // Правило 4
+                if (current.StartsWith("LOAD") && i + 1 < assemblyCode.Count)
                 {
-                    string next = instructions[i + 1];
-                    if (next.StartsWith("STORE") && i + 2 < instructions.Count && instructions[i + 2].StartsWith("LOAD"))
+                    string next = assemblyCode[i + 1];
+                    if (next.StartsWith("STORE") && i + 2 < assemblyCode.Count && assemblyCode[i + 2].StartsWith("LOAD"))
                     {
                         string loadValue = current.Split(' ')[1];
                         string storeValue = next.Split(' ')[1];
-                        // Заменяем все вхождения storeValue на loadValue
-                        for (int j = i + 2; j < instructions.Count; j++)
+
+                        // Замена вхождений b на a
+                        for (int j = i + 2; j < assemblyCode.Count; j++)
                         {
-                            if (instructions[j].Contains(storeValue))
+                            if (assemblyCode[j].Contains(storeValue))
                             {
-                                instructions[j] = instructions[j].Replace(storeValue, loadValue);
+                                assemblyCode[j] = assemblyCode[j].Replace(storeValue, loadValue);
                             }
                         }
-                        instructions.RemoveAt(i); // Удаляем LOAD
-                        instructions.RemoveAt(i); // Удаляем STORE
-                        i--; // Корректируем индекс после удаления
+                        assemblyCode.RemoveAt(i);
+                        assemblyCode.RemoveAt(i);
+                        i--;
                     }
                 }
             }
         }
 
-            #region OutputFunctions
+        #region OutputFunctions
 
         /// <summary>
         /// Вывод дерева в файл
         /// </summary>
-            public void PrintTreeToFile(Node node, StreamWriter writer, int level)
+        public void PrintTreeToFile(Node node, StreamWriter writer, int level)
         {
             if (node == null) return;
 
             PrintTreeToFile(node.right, writer, level + 1);
             writer.WriteLine(new string(' ', level * 4) + node.oper);
             PrintTreeToFile(node.left, writer, level + 1);
-        }
-
-        /// <summary>
-        /// Вывод таблицы имен в файл
-        /// </summary>
-        /// <param name="filePath">Путь до файла куда записывать</param>
-        public void PrintVariableTableToFile(string filePath)
-        {
-            using (StreamWriter writer = new StreamWriter(filePath))
-            {
-                writer.WriteLine("Таблица имен:");
-                foreach (var variable in _variableTable)
-                {
-                    writer.WriteLine($"{variable.Key} : {variable.Value}");
-                }
-            }
         }
 
         /// <summary>
@@ -232,10 +217,10 @@ namespace TPLnTM_Lab1
             List<string> assemblyCode = new();
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine("Дерево:\n");
-                PrintTreeToFile(root, writer, 0);
+                //writer.WriteLine("Дерево:\n");
+                //PrintTreeToFile(root, writer, 0);
 
-                writer.WriteLine("Таблица имен:");
+                writer.WriteLine("\nТаблица имен:");
                 foreach (var variable in _variableTable)
                     writer.WriteLine($"{variable.Key} : {variable.Value}");
 
@@ -248,7 +233,7 @@ namespace TPLnTM_Lab1
 
                 writer.WriteLine("\nОптимизированный код:");
 
-                OptimizeCode(assemblyCode);
+                OptimizeAssemblyCode(assemblyCode);
 
                 foreach (var codeStr in assemblyCode)
                     writer.WriteLine($"{codeStr}");
