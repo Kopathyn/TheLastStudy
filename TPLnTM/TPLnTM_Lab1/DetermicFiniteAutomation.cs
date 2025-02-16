@@ -176,7 +176,7 @@ public class DeterministicFiniteAutomatonWithStack
     {
         "\\p{L}",
         "\\d",
-        "[\\+\\*\\\\\\-]",
+        "[\\+\\*]",
         "\\(", "\\)",
         "\\.",
         "\\=",

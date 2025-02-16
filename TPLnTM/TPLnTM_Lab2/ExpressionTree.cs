@@ -97,14 +97,14 @@
             // Обработка вершин
             if (node.left != null && node.right != null)
             {
-                if (node.oper == "*" || node.oper == "/")
+                if (node.oper == "*")
                 {
                     GenerateAssemblyCode(node.right, assemblyCode);
                     assemblyCode.Add($"STORE ${node.level}");
                     GenerateAssemblyCode(node.left, assemblyCode);
                     assemblyCode.Add($"MPY ${node.level}");
                 }
-                else if (node.oper == "+" || node.oper == "-")
+                else if (node.oper == "+")
                 {
                     GenerateAssemblyCode(node.right, assemblyCode);
                     assemblyCode.Add($"STORE ${node.level}");
@@ -119,7 +119,7 @@
             }
             else // Обработка листьев
             {
-                if (node.oper == "=" || node.oper == "+" || node.oper == "-" || node.oper == "*" || node.oper == "/")
+                if (node.oper == "=" || node.oper == "+" || node.oper == "*")
                     return;
 
                 if (IsVariable(node.oper))
@@ -257,11 +257,7 @@
                     return 1;
                 case '+':
                     return 2;
-                case '-':
-                    return 2;
                 case '*':
-                    return 3;
-                case '\\':
                     return 3;
                 default:
                     return 4;

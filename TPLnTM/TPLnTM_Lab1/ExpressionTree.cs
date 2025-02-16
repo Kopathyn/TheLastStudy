@@ -99,14 +99,14 @@ namespace TPLnTM_Lab1
             // Обработка вершин
             if (node.left != null && node.right != null)
             {
-                if (node.oper == "*" || node.oper == "/")
+                if (node.oper == "*")
                 {
                     GenerateAssemblyCode(node.right, assemblyCode);
                     assemblyCode.Add($"STORE ${node.level}");
                     GenerateAssemblyCode(node.left, assemblyCode);
                     assemblyCode.Add($"MPY ${node.level}");
                 }
-                else if (node.oper == "+" || node.oper == "-")
+                else if (node.oper == "+")
                 {
                     GenerateAssemblyCode(node.right, assemblyCode);
                     assemblyCode.Add($"STORE ${node.level}");
@@ -121,7 +121,7 @@ namespace TPLnTM_Lab1
             }
             else // Обработка листьев
             {
-                if (node.oper == "=" || node.oper == "+" || node.oper == "-" || node.oper == "*" || node.oper == "/")
+                if (node.oper == "=" || node.oper == "+" || node.oper == "*")
                     return;
 
                 if (IsVariable(node.oper))

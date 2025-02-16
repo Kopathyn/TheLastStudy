@@ -22,8 +22,6 @@ public class Program
             expressionTree.ProcessExpression(node, str);
 
             expressionTree.PrintAllInfo(outputPath, node);
-
-
         }
 
         Process.Start("explorer.exe", outputPath);
