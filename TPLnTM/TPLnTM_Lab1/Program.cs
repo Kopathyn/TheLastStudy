@@ -12,6 +12,7 @@ public class Program
 
         DeterministicFiniteAutomatonWithStack DFA = new(outputPath);
 
+        Console.WriteLine($"Обработка строки: {str}");
         bool reuslt = DFA.Run(str);
 
         if (reuslt)

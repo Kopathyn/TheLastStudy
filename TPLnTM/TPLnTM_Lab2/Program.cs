@@ -11,7 +11,7 @@ class Program
         string input = File.ReadAllText(inputPath);
 
         bool result = RegularExpression.CheckString(input);
-
+        Console.WriteLine($"Обработка строки: {input}");
         if (result)
         {
             Node node = new();

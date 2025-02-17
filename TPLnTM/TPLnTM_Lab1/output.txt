@@ -1,22 +1,17 @@
 
 Таблица имен:
-cost : double
-price : double
-tax : double
-0.98 : const float
+x : double
+y12 : double
+z : double
 
 Неоптимизированный код:
-LOAD =0.98
+LOAD z
 STORE $1
-LOAD tax
-STORE $2
-LOAD price
-ADD $2
-MPY $1
-STORE cost
+LOAD y12
+ADD $1
+STORE x
 
 Оптимизированный код:
-LOAD tax
-ADD price
-MPY =0.98
-STORE cost
+LOAD z
+ADD y12
+STORE x

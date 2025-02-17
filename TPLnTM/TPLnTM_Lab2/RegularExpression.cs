@@ -11,7 +11,7 @@ namespace TPLnTM_Lab2
         /// <returns>Результат</returns>
         static public bool CheckString(string str)
         {
-            string pattern = @"^([a-zA-Z_][a-zA-Z0-9_]*=([0-9]+(\.[0-9]+)?|[a-zA-Z_][a-zA-Z0-9_]*|(\([^\)]*\))|([\+\*]))*)$"; 
+            string pattern = @"^([a-zA-Z_][a-zA-Z0-9_]*=([a-zA-Z_][a-zA-Z0-9_]*|[0-9]+(\.[0-9]+)?|(\([^\)]*\))|([\+\*])))*$"; 
 
             if (Regex.IsMatch(str, pattern))
                 return true;
