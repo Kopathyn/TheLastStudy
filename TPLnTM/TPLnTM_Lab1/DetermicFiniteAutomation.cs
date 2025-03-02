@@ -25,20 +25,6 @@ public class DeterministicFiniteAutomatonWithStack
     }
 
     /// <summary>
-    /// Обработка стека
-    /// </summary>
-    private void StackProcessing(_states state, char symbol)
-    {
-        if (state == _states.q5)
-        {
-            if (symbol == '(')
-                _stack.Push(symbol);
-            else if (symbol == ')')
-                _stack.Pop();
-        }        
-    }
-
-    /// <summary>
     /// Запуск ДМПА
     /// </summary>
     /// <param name="str">Строка</param>
@@ -66,7 +52,6 @@ public class DeterministicFiniteAutomatonWithStack
             {
                 state = _transitionTable[state][matchedAlphabet];
 
-                StackProcessing(state, symbol);
             }
             else
             {
@@ -101,7 +86,8 @@ public class DeterministicFiniteAutomatonWithStack
             _states.q0,
             new Dictionary<string, _states>
             {
-                {_alphabet[0], _states.q1 }
+                {_alphabet[0], _states.q1 },
+                {_alphabet[7], _states.q0 }
             }
         },
 
@@ -119,8 +105,8 @@ public class DeterministicFiniteAutomatonWithStack
             _states.q2,
             new Dictionary<string, _states>
             {
-                {_alphabet[0], _states.q4 },
                 {_alphabet[1], _states.q3 },
+                {_alphabet[0], _states.q4 },
                 {_alphabet[3], _states.q5 }
             }
         },
@@ -129,10 +115,11 @@ public class DeterministicFiniteAutomatonWithStack
             _states.q3,
             new Dictionary<string, _states>
             {
-                {_alphabet[1], _states.q3 },
                 { _alphabet[2], _states.q2 },
+                {_alphabet[1], _states.q3 },
                 { _alphabet[4], _states.q5 },
-                {_alphabet[5], _states.q3 },
+                {_alphabet[8], _states.q6 },
+                {_alphabet[5], _states.q7 },
                 {"", _states.HALT}
             }
         },
@@ -141,9 +128,9 @@ public class DeterministicFiniteAutomatonWithStack
             _states.q4,
             new Dictionary<string, _states>
             {
+                {_alphabet[2], _states.q2 },
                 {_alphabet[0], _states.q4 },
                 {_alphabet[1], _states.q4 },
-                {_alphabet[2], _states.q2 },
                 {_alphabet[4], _states.q5 },
                 {"", _states.HALT}
             }
@@ -153,10 +140,28 @@ public class DeterministicFiniteAutomatonWithStack
             _states.q5,
             new Dictionary<string, _states>
             {
-                {_alphabet[0], _states.q4 },
-                {_alphabet[1], _states.q3 },
                 {_alphabet[2], _states.q2 },
+                {_alphabet[1], _states.q3 },
+                {_alphabet[0], _states.q4 },
                 {_alphabet[4], _states.q5 },
+                {"", _states.HALT}
+            }
+        },
+
+        {
+            _states.q6,
+            new Dictionary<string, _states>
+            {
+                {_alphabet[9], _states.q7 }
+            }
+        },
+
+        {
+            _states.q7,
+            new Dictionary<string, _states>
+            {
+                {_alphabet[2], _states.q2 },
+                {_alphabet[1], _states.q7 },
                 {"", _states.HALT}
             }
         }
@@ -168,19 +173,21 @@ public class DeterministicFiniteAutomatonWithStack
     // Состояния автомата
     private enum _states 
     {
-        q0, q1, q2, q3, q4, q5, HALT
+        q0, q1, q2, q3, q4, q5, q6, q7, HALT
     }
 
     // Алфавит автомата в РВ
     private static string[] _alphabet = 
     {
-        "\\p{L}",
-        "\\d",
-        "[\\+\\*]",
-        "\\(", "\\)",
-        "\\.",
-        "\\=",
-        "\\s"
+        "\\p{L}",     // Буквы (0)
+        "\\d",        // Цифры (1)
+        "[\\+\\*]",   // Знаки сложения и умножения (2)
+        "\\(", "\\)", // Скобки (3, 4)
+        "\\.",        // "Запятая" (5)
+        "\\=",        // Знак равенства (6)
+        "\\s",        // Пробел (7)
+        "\\Ee",       // Научная нотация (8)
+        "\\+"         // Отдельный плюс  (9)
     };
 
 #endregion
