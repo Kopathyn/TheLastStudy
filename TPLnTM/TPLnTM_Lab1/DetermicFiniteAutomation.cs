@@ -34,7 +34,7 @@ public class DeterministicFiniteAutomatonWithStack
     /// </returns>
     public bool Run(string str)
     {
-        _states state = _states.q0;
+        string state = "q0";
 
         for (int i = 0; i < str.Length; i++)
         {
@@ -48,12 +48,28 @@ public class DeterministicFiniteAutomatonWithStack
                 return false;
             }
 
-            if (_transitionTable[state].ContainsKey(matchedAlphabet))
+            // Поиск соответствующего перехода
+            bool found = false;
+            foreach (var transition in _transitionTable[state])
             {
-                state = _transitionTable[state][matchedAlphabet];
+                if (transition[1] == matchedAlphabet || transition[1] == symbol.ToString())
+                {
+                    found = true;
+                    state = transition[0];
 
+                    if (transition.Length == 3)
+                    {
+                        if (transition[2] == "Push")
+                            _stack.Push(symbol);
+                        else if (transition[2] == "Pop")
+                            _stack.Pop();
+                    }
+
+                    break;
+                }
             }
-            else
+
+            if (!found)
             {
                 Console.WriteLine("Автомат завершил работу с ошибкой.");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
@@ -62,7 +78,7 @@ public class DeterministicFiniteAutomatonWithStack
         }
 
         // Проверка на завершение
-        if (_transitionTable[state].ContainsValue(_states.HALT) && _stack.Count == 0)
+        if (_transitionTable[state].Any(transition => transition[0] == "HALT" && _stack.Count == 0))
         {
             Console.WriteLine("Автомат завершил работу успешно.");
             return true;
@@ -79,105 +95,8 @@ public class DeterministicFiniteAutomatonWithStack
 
     private string _filePath;
 
-    // Таблица переходов
-    private Dictionary<_states, Dictionary<string, _states>> _transitionTable = new Dictionary<_states, Dictionary<string, _states>>
-    {
-        {
-            _states.q0,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[0], _states.q1 },
-                {_alphabet[7], _states.q0 }
-            }
-        },
-
-        {
-            _states.q1,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[0], _states.q1},
-                {_alphabet[1], _states.q1},
-                {_alphabet[6], _states.q2}
-            }
-        },
-
-        {
-            _states.q2,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[1], _states.q3 },
-                {_alphabet[0], _states.q4 },
-                {_alphabet[3], _states.q5 }
-            }
-        },
-
-        {
-            _states.q3,
-            new Dictionary<string, _states>
-            {
-                { _alphabet[2], _states.q2 },
-                {_alphabet[1], _states.q3 },
-                { _alphabet[4], _states.q5 },
-                {_alphabet[8], _states.q6 },
-                {_alphabet[5], _states.q7 },
-                {"", _states.HALT}
-            }
-        },
-
-        {
-            _states.q4,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[2], _states.q2 },
-                {_alphabet[0], _states.q4 },
-                {_alphabet[1], _states.q4 },
-                {_alphabet[4], _states.q5 },
-                {"", _states.HALT}
-            }
-        },
-
-        {
-            _states.q5,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[2], _states.q2 },
-                {_alphabet[1], _states.q3 },
-                {_alphabet[0], _states.q4 },
-                {_alphabet[4], _states.q5 },
-                {"", _states.HALT}
-            }
-        },
-
-        {
-            _states.q6,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[9], _states.q7 }
-            }
-        },
-
-        {
-            _states.q7,
-            new Dictionary<string, _states>
-            {
-                {_alphabet[2], _states.q2 },
-                {_alphabet[1], _states.q7 },
-                {"", _states.HALT}
-            }
-        }
-    };
-
-    // Стек(Магазин) автомата
-    private Stack<char> _stack = new(); 
-
-    // Состояния автомата
-    private enum _states 
-    {
-        q0, q1, q2, q3, q4, q5, q6, q7, HALT
-    }
-
     // Алфавит автомата в РВ
-    private static string[] _alphabet = 
+    private static string[] _alphabet =
     {
         "\\p{L}",     // Буквы (0)
         "\\d",        // Цифры (1)
@@ -186,9 +105,85 @@ public class DeterministicFiniteAutomatonWithStack
         "\\.",        // "Запятая" (5)
         "\\=",        // Знак равенства (6)
         "\\s",        // Пробел (7)
-        "\\Ee",       // Научная нотация (8)
-        "\\+"         // Отдельный плюс  (9)
     };
 
-#endregion
+    // Таблица переходов
+    private Dictionary<string, string[][]> _transitionTable = new Dictionary<string, string[][]>
+    {
+        {
+            "q0",
+            new string[][] { new string[] { "q1", _alphabet[0] } }
+        },
+        {
+            "q1",
+            new string[][]
+            {
+                new string[] { "q1", _alphabet[0]  },
+                new string[] { "q1", _alphabet[1] },
+                new string[] { "q2", _alphabet[6] }
+            }
+        },
+        {
+            "q2",
+            new string[][]
+            {
+                new string[] { "q3", _alphabet[1] },
+                new string[] { "q4", _alphabet[0] },
+                new string[] { "q5", _alphabet[3], "Push" }
+            }
+        },
+        {
+            "q3",
+            new string[][]
+            {
+                new string[] { "q2", _alphabet[2] },
+                new string[] { "q3", _alphabet[1] },
+                new string[] { "q5", _alphabet[4], "Pop" },
+                new string[] { "q6", "E" },
+                new string[] { "q6", "e" },
+                new string[] { "q7", _alphabet[5] },
+                new string[] { "HALT", "" }
+            }
+        },
+        {
+            "q4",
+            new string[][]
+            {
+                new string[] { "q2", _alphabet[2] },
+                new string[] { "q4", _alphabet[0] },
+                new string[] { "q4", _alphabet[1] },
+                new string[] { "q5", _alphabet[4], "Pop" },
+                new string[] { "HALT", "" }
+            }
+        },
+        {
+            "q5",
+            new string[][]
+            {
+                new string[] { "q2", _alphabet[2] },
+                new string[] { "q3", _alphabet[1] },
+                new string[] { "q4", _alphabet[0] },
+                new string[] { "q5", _alphabet[4], "Pop" },
+                new string[] { "HALT", "" }
+            }
+        },
+        {
+            "q6",
+            new string[][] { new string[] { "q7", "+" } }
+        },
+        {
+            "q7",
+            new string[][]
+            {
+                new string[] { "q2", _alphabet[2] },
+                new string[] { "q7", _alphabet[1] },
+                new string[] { "HALT", "" }
+            }
+        }
+    };
+
+    // Стек(Магазин) автомата
+    private Stack<char> _stack = new();
+
+    #endregion
 }
