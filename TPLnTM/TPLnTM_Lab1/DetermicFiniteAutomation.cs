@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 public class DeterministicFiniteAutomatonWithStack
 {
@@ -28,11 +25,8 @@ public class DeterministicFiniteAutomatonWithStack
     /// Запуск ДМПА
     /// </summary>
     /// <param name="str">Строка</param>
-    /// <returns>
-    /// true - успешное завершение
-    /// false - завершение с ошибкой
-    /// </returns>
-    public bool Run(string str)
+    /// <returns>Преобразование строки в ОПЗ</returns>
+    public string Run(string str)
     {
         string state = "q0";
 
@@ -44,22 +38,15 @@ public class DeterministicFiniteAutomatonWithStack
         {
             char symbol = str[i];
 
-            // Пропускаем пробелы
-            if (char.IsWhiteSpace(symbol))
-            {
-                continue; // Пропускаем итерацию цикла
-            }
-
             string matchedAlphabet = MatchSymbol(symbol);
 
             if (matchedAlphabet == null)
             {
                 Console.WriteLine("Автомат завершил работу с ошибкой.");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
-                return false;
+                return null;
             }
 
-            
             bool transitionFlag = false;
             foreach (var transition in _transitionTable[state])
             {
@@ -81,6 +68,7 @@ public class DeterministicFiniteAutomatonWithStack
                         {
                             _stack.Pop();
 
+                            outputString += " ";
                             while (operatorStack.Count > 0 && operatorStack.Peek() != '(')
                                 outputString += operatorStack.Pop();
 
@@ -97,6 +85,8 @@ public class DeterministicFiniteAutomatonWithStack
 
                     else // Если символ - знак операции
                     {
+                        outputString += " ";
+
                         int currentPriority = GetOperatorPriority(symbol);
 
                         while (operatorStack.Count > 0 && GetOperatorPriority(operatorStack.Peek()) >= currentPriority)
@@ -113,26 +103,25 @@ public class DeterministicFiniteAutomatonWithStack
             {
                 Console.WriteLine("Автомат завершил работу с ошибкой.");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
-                return false;
+                return null;
             }
         }
 
         // Извлечение оставшихся операторов из стека в выходную строку
         while (operatorStack.Count > 0)
-            outputString += operatorStack.Pop();
+            outputString += " " + operatorStack.Pop();
 
         // Проверка на завершение
         if (_transitionTable[state].Any(transition => transition[0] == "HALT" && _stack.Count == 0))
         {
             Console.WriteLine("Автомат завершил работу успешно.");
-            Console.WriteLine("Выходная строка: " + outputString); // Выводим выходную строку
-            return true;
+            return outputString;
         }
         else
         {
             Console.WriteLine("Автомат завершил работу с ошибкой.");
             File.WriteAllText(_filePath, "Строка введена некорректно");
-            return false;
+            return null;
         }
     }
 
@@ -145,8 +134,6 @@ public class DeterministicFiniteAutomatonWithStack
                 return 3; // Наивысший приоритет
             case '+':
                 return 2; // Средний приоритет
-            case '(':
-                return 1; // Наименьший приоритет
             default:
                 return 0; // Не оператор
         }
@@ -165,7 +152,6 @@ public class DeterministicFiniteAutomatonWithStack
         "\\(", "\\)", // Скобки (3, 4)
         "\\.",        // "Запятая" (5)
         "\\=",        // Знак равенства (6)
-        "\\s",        // Пробел (7)
     };
 
     // Таблица переходов

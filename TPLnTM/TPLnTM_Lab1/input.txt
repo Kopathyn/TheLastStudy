@@ -1,1 +1,1 @@
-﻿x=y12+z
+﻿cost=(price+tax)*0.98

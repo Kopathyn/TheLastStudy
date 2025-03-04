@@ -1,17 +1,31 @@
+Дерево:
+
+        0.98
+    *
+            tax
+        +
+            price
+=
+    cost
 
 Таблица имен:
-x : double
-y12 : double
-z : double
+cost : double
+price : double
+tax : double
+0.98 : const float
 
 Неоптимизированный код:
-LOAD z
-STORE $1
-LOAD y12
-ADD $1
-STORE x
+LOAD =0.98
+STORE $0
+LOAD tax
+STORE $0
+LOAD price
+ADD $0
+MPY $0
+STORE cost
 
 Оптимизированный код:
-LOAD z
-ADD y12
-STORE x
+LOAD tax
+ADD price
+MPY tax
+STORE cost
