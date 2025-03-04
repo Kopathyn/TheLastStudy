@@ -13,14 +13,14 @@ public class Program
         DeterministicFiniteAutomatonWithStack DFA = new(outputPath);
 
         Console.WriteLine($"Обработка строки: {str}");
-        bool reuslt = DFA.Run(str);
+        string result = DFA.Run(str);
 
-        if (reuslt)
+        if (result != null)
         {
             Node node = new();
             ExpressionTree expressionTree = new ExpressionTree();
 
-            expressionTree.ProcessExpression(node, str);
+            node = expressionTree.ProcessExpression(result);
 
             expressionTree.PrintAllInfo(outputPath, node);
         }
