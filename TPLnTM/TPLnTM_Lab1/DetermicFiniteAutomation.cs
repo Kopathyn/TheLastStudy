@@ -35,7 +35,7 @@ public class DeterministicFiniteAutomatonWithStack
     public bool Run(string str)
     {
         string state = "q0";
-        
+
         /* Для формирования ОПЗ */
         Stack<char> operatorStack = new Stack<char>();
         string outputString = "";
@@ -43,6 +43,13 @@ public class DeterministicFiniteAutomatonWithStack
         for (int i = 0; i < str.Length; i++)
         {
             char symbol = str[i];
+
+            // Пропускаем пробелы
+            if (char.IsWhiteSpace(symbol))
+            {
+                continue; // Пропускаем итерацию цикла
+            }
+
             string matchedAlphabet = MatchSymbol(symbol);
 
             if (matchedAlphabet == null)
@@ -52,39 +59,42 @@ public class DeterministicFiniteAutomatonWithStack
                 return false;
             }
 
-            // Поиск соответствующего перехода
-            bool found = false;
+            
+            bool transitionFlag = false;
             foreach (var transition in _transitionTable[state])
             {
                 if (transition[1] == matchedAlphabet || transition[1] == symbol.ToString())
                 {
-                    found = true;
+                    transitionFlag = true;
                     state = transition[0];
 
                     if (transition.Length == 3)
                     {
                         if (transition[2] == "Push")
+                        {
                             _stack.Push(symbol);
 
+                            operatorStack.Push(symbol);
+                        }
+
                         else if (transition[2] == "Pop")
+                        {
                             _stack.Pop();
+
+                            while (operatorStack.Count > 0 && operatorStack.Peek() != '(')
+                                outputString += operatorStack.Pop();
+
+                            if (operatorStack.Count > 0)
+                                operatorStack.Pop();
+                        }
+
+                        break;
                     }
 
                     // Обработка символов в соответствии с алгоритмом
                     if (char.IsLetterOrDigit(symbol) || symbol == '.')
                         outputString += symbol;
 
-                    else if (symbol == '(')
-                        operatorStack.Push(symbol);
-
-                    else if (symbol == ')')
-                    {
-                        while (operatorStack.Count > 0 && operatorStack.Peek() != '(')
-                            outputString += operatorStack.Pop();
-
-                        if (operatorStack.Count > 0)
-                            operatorStack.Pop();
-                    }
                     else // Если символ - знак операции
                     {
                         int currentPriority = GetOperatorPriority(symbol);
@@ -99,7 +109,7 @@ public class DeterministicFiniteAutomatonWithStack
                 }
             }
 
-            if (!found)
+            if (!transitionFlag)
             {
                 Console.WriteLine("Автомат завершил работу с ошибкой.");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
