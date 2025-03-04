@@ -35,6 +35,10 @@ public class DeterministicFiniteAutomatonWithStack
     public bool Run(string str)
     {
         string state = "q0";
+        
+        /* Для формирования ОПЗ */
+        Stack<char> operatorStack = new Stack<char>();
+        string outputString = "";
 
         for (int i = 0; i < str.Length; i++)
         {
@@ -61,8 +65,34 @@ public class DeterministicFiniteAutomatonWithStack
                     {
                         if (transition[2] == "Push")
                             _stack.Push(symbol);
+
                         else if (transition[2] == "Pop")
                             _stack.Pop();
+                    }
+
+                    // Обработка символов в соответствии с алгоритмом
+                    if (char.IsLetterOrDigit(symbol) || symbol == '.')
+                        outputString += symbol;
+
+                    else if (symbol == '(')
+                        operatorStack.Push(symbol);
+
+                    else if (symbol == ')')
+                    {
+                        while (operatorStack.Count > 0 && operatorStack.Peek() != '(')
+                            outputString += operatorStack.Pop();
+
+                        if (operatorStack.Count > 0)
+                            operatorStack.Pop();
+                    }
+                    else // Если символ - знак операции
+                    {
+                        int currentPriority = GetOperatorPriority(symbol);
+
+                        while (operatorStack.Count > 0 && GetOperatorPriority(operatorStack.Peek()) >= currentPriority)
+                            outputString += operatorStack.Pop();
+
+                        operatorStack.Push(symbol);
                     }
 
                     break;
@@ -77,10 +107,15 @@ public class DeterministicFiniteAutomatonWithStack
             }
         }
 
+        // Извлечение оставшихся операторов из стека в выходную строку
+        while (operatorStack.Count > 0)
+            outputString += operatorStack.Pop();
+
         // Проверка на завершение
         if (_transitionTable[state].Any(transition => transition[0] == "HALT" && _stack.Count == 0))
         {
             Console.WriteLine("Автомат завершил работу успешно.");
+            Console.WriteLine("Выходная строка: " + outputString); // Выводим выходную строку
             return true;
         }
         else
@@ -88,6 +123,22 @@ public class DeterministicFiniteAutomatonWithStack
             Console.WriteLine("Автомат завершил работу с ошибкой.");
             File.WriteAllText(_filePath, "Строка введена некорректно");
             return false;
+        }
+    }
+
+    // Метод для получения приоритета оператора
+    private int GetOperatorPriority(char op)
+    {
+        switch (op)
+        {
+            case '*':
+                return 3; // Наивысший приоритет
+            case '+':
+                return 2; // Средний приоритет
+            case '(':
+                return 1; // Наименьший приоритет
+            default:
+                return 0; // Не оператор
         }
     }
 
