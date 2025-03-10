@@ -210,6 +210,7 @@ public class DeterministicFiniteAutomatonWithStack
                 new string[] { "q2", _alphabet[2] },
                 new string[] { "q3", _alphabet[1] },
                 new string[] { "q4", _alphabet[0] },
+                new string[] { "q5", _alphabet[3], "Push" },
                 new string[] { "q5", _alphabet[4], "Pop" },
                 new string[] { "HALT", "" }
             }
@@ -224,6 +225,7 @@ public class DeterministicFiniteAutomatonWithStack
             {
                 new string[] { "q2", _alphabet[2] },
                 new string[] { "q7", _alphabet[1] },
+                new string[] { "q7", _alphabet[4], "Pop" },
                 new string[] { "HALT", "" }
             }
         }
