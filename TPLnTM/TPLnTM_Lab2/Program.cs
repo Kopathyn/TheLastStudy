@@ -1,31 +1,56 @@
-﻿using System.Diagnostics;
-using TPLnTM_Lab2;
+﻿using System;
+using System.Text.RegularExpressions;
 
-class Program
+public class Program
 {
-    static void Main()
+    public static void Main()
     {
-        string inputPath = @"..\..\..\input.txt";
-        string outputPath = @"..\..\..\output.txt";
+        string input = "cost = +";
 
-        string input = File.ReadAllText(inputPath);
+        Regex regex = new Regex(@"
+            ^\s*
+            (?<double>[A-Za-z][A-Za-z0-9]*)   # Переменная
+            \s*=\s*
+            (
+                (?:                           # Элементы выражения
+                    \s*
+                    (
+                        (?<const_int>\b\d+\b(?!\.))      # Целые числа
+                        |
+                        (?<const_float>                  # Числа с плавающей точкой
+                            \d+\.\d+([eE][+-]?\d+)?     # С дробной частью
+                            |
+                            \d+[eE][+]?\d+             # Экспоненциальный формат
+                        )
+                        |
+                        (?<double>[A-Za-z][A-Za-z0-9]*)            # Переменные
+                        |
+                        [+*()]                        # Операторы и скобки
+                        |
+                        \s+                             # Пробелы
+                    )
+                )+
+            )
+            \s*$", RegexOptions.IgnorePatternWhitespace);
+        Match match = regex.Match(input);
 
-        bool result = RegularExpression.CheckString(input);
-        Console.WriteLine($"Обработка строки: {input}");
-        if (result)
+        if (match.Success)
         {
-            Node node = new();
-            ExpressionTree expressionTree = new ExpressionTree();
+            Console.WriteLine($"Переменная (double):");
+            foreach (Capture capture in match.Groups["double"].Captures)
+                Console.WriteLine(capture.Value);
 
-            expressionTree.ProcessExpression(node, input);
+            Console.WriteLine("Целые числа (const int):");
+            foreach (Capture capture in match.Groups["const_int"].Captures)
+                Console.WriteLine(capture.Value);
 
-            expressionTree.PrintAllInfo(outputPath, node);
+            Console.WriteLine("Числа с плавающей точкой (const float):");
+            foreach (Capture capture in match.Groups["const_float"].Captures)
+                Console.WriteLine(capture.Value);
         }
         else
         {
-            File.WriteAllText(outputPath, "Некорректное выражение.");
+            Console.WriteLine("Строка не соответствует формату.");
         }
-
-        Process.Start("explorer.exe", outputPath);
     }
 }
