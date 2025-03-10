@@ -1,1 +1,1 @@
-﻿cost=(0.98*(price+tax))
+﻿cost=(price+tax)*0.98

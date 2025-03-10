@@ -17,6 +17,8 @@ public class Program
 
         if (result != null)
         {
+            Console.WriteLine (result);
+
             Node node = new();
             ExpressionTree expressionTree = new ExpressionTree();
 

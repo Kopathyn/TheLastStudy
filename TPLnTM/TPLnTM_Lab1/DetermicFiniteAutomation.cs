@@ -90,7 +90,7 @@ public class DeterministicFiniteAutomatonWithStack
                         int currentPriority = GetOperatorPriority(symbol);
 
                         while (operatorStack.Count > 0 && GetOperatorPriority(operatorStack.Peek()) >= currentPriority)
-                            outputString += operatorStack.Pop();
+                            outputString += operatorStack.Pop() + " ";
 
                         operatorStack.Push(symbol);
                     }

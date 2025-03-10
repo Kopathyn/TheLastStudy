@@ -1,4 +1,7 @@
-﻿namespace TPLnTM_Lab2
+﻿using System.Globalization;
+using System.Linq;
+
+namespace TPLnTM_Lab2
 {
     /// <summary>
     /// Узел дерева
@@ -26,65 +29,40 @@
         #region PublicFunctions
 
         /// <summary>
-        /// Обработка выражения
+        /// Обработка выражения в обратной польской записи
         /// </summary>
-        /// <param name="node">Узел дерева</param>
-        /// <param name="expr">Выражение или его часть</param>
-        public void ProcessExpression(Node node, string expr)
+        /// <param name="expr">Выражение в ОПЗ</param>
+        /// <returns>Корень дерева</returns>
+        public Node ProcessExpression(string expr)
         {
-            node.level++;
+            Stack<Node> stack = new Stack<Node>();
+            string[] tokens = expr.Split(' ');
 
-            /* Проверка на скобки */
-
-            if (expr[0] == '(' && expr[expr.Length - 1] == ')')
+            foreach (var token in tokens)
             {
-                ProcessExpression(node, expr.Substring(1, expr.Length - 2));
-                return;
-            }
-
-            /* Поиск знаков операции */
-
-            int pos = -1; // Позиция операции
-            int priority = 4; // Приоритет операции
-
-            for (int i = 0; i < expr.Length; i++)
-            {
-                char currentChar = expr[i];
-                int currentPriority = GetPriority(currentChar);
-
-                if (currentPriority < priority && !IsInsideBrackets(expr, i))
+                if (IsVariable(token) || IsConstant(token))
                 {
-                    pos = i;
-                    priority = currentPriority;
+                    Node node = new Node { oper = token };
+                    stack.Push(node);
+
+                    if (IsVariable(token))
+                        _variableTable.Add(token, "double");
+
+                    else if (token.Contains('.'))
+                        _variableTable.Add(token, "const float");
+
+                    else _variableTable.Add(token, "const int");
                 }
-            }
-
-            if (pos != -1)
-            {
-                node.oper = expr[pos].ToString();
-                node.left = new Node();
-                node.right = new Node();
-
-                ProcessExpression(node.left, expr.Substring(0, pos));
-                ProcessExpression(node.right, expr.Substring(pos + 1));
-            }
-            else
-            {
-                node.oper = expr;
-
-                if (IsVariable(expr))
-                    _variableTable.Add(expr, "double");
                 else
                 {
-                    if (expr.Contains('.'))
-                        _variableTable.Add(expr, "const float");
-                    else
-                        _variableTable.Add(expr, "const int");
+                    Node node = new Node { oper = token };
+                    node.right = stack.Pop();
+                    node.left = stack.Pop();
+                    stack.Push(node);
                 }
-
-                node.left = null;
-                node.right = null;
             }
+
+            return stack.Pop();
         }
 
         /// <summary>
@@ -196,7 +174,7 @@
         /// <summary>
         /// Вывод дерева в файл
         /// </summary>
-        public void PrintTreeToFile(Node node, StreamWriter writer, int level)
+        public void PrintTreeToFile(Node node, StreamWriter writer, int level = 0)
         {
             if (node == null) return;
 
@@ -215,8 +193,8 @@
             List<string> assemblyCode = new();
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                //writer.WriteLine("Дерево:\n");
-                //PrintTreeToFile(root, writer, 0);
+                writer.WriteLine("Дерево:\n");
+                PrintTreeToFile(root, writer, 0);
 
                 writer.WriteLine("\nТаблица имен:");
                 foreach (var variable in _variableTable)
@@ -245,42 +223,6 @@
         #region PrivateFunctions
 
         /// <summary>
-        /// Получение приоритета мат. знака
-        /// </summary>
-        /// <param name="operation">Мат. знак</param>
-        /// <returns>Значение приоритета</returns>
-        private int GetPriority(char operation)
-        {
-            switch (operation)
-            {
-                case '=':
-                    return 1;
-                case '+':
-                    return 2;
-                case '*':
-                    return 3;
-                default:
-                    return 4;
-            }
-        }
-
-        /// <summary>
-        /// Проверка на то, является ли выражение в скобках
-        /// </summary>
-        /// <param name="expr">Выражение</param>
-        /// <param name="index">Индекс, до какого необходимо проверить</param>
-        private bool IsInsideBrackets(string expr, int index)
-        {
-            int openBrackets = 0;
-            for (int i = 0; i < index; i++)
-            {
-                if (expr[i] == '(') openBrackets++;
-                if (expr[i] == ')') openBrackets--;
-            }
-            return openBrackets > 0;
-        }
-
-        /// <summary>
         /// Проверка на то, являелся ли подстрока переменной
         /// </summary>
         /// <param name="expr">Строка или продстрока</param>
@@ -288,6 +230,16 @@
         {
             // Проверяем, является ли выражение идентификатором переменной
             return !string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]);
+        }
+
+        /// <summary>
+        /// Проверка на то, является ли строка константой
+        /// </summary>
+        /// <param name="expr">Строка или подстрока</param>
+        private bool IsConstant(string expr)
+        {
+            // Проверяем, является ли выражение константой (числом)
+            return double.TryParse(expr, CultureInfo.InvariantCulture, out _);
         }
 
         #endregion

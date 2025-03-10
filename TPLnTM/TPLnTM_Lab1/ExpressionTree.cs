@@ -228,7 +228,6 @@ namespace TPLnTM_Lab1
         /// <param name="expr">Строка или продстрока</param>
         private bool IsVariable(string expr)
         {
-            // Проверяем, является ли выражение идентификатором переменной
             return !string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]);
         }
 
@@ -238,7 +237,6 @@ namespace TPLnTM_Lab1
         /// <param name="expr">Строка или подстрока</param>
         private bool IsConstant(string expr)
         {
-            // Проверяем, является ли выражение константой (числом)
             return double.TryParse(expr, CultureInfo.InvariantCulture, out _);
         }
 
