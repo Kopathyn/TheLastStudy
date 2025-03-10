@@ -1,24 +1,31 @@
 Дерево:
 
-        10E+10
-    +
-        price
+        0.98
+    *
+            tax
+        +
+            price
 =
     cost
 
 Таблица имен:
 cost : double
 price : double
-10E+10 : const int
+tax : double
+0.98 : const float
 
 Неоптимизированный код:
-LOAD =10E+10
-STORE $0
+LOAD =0.98
+STORE $2
+LOAD tax
+STORE $1
 LOAD price
-ADD $0
+ADD $1
+MPY $2
 STORE cost
 
 Оптимизированный код:
-LOAD =10E+10
+LOAD tax
 ADD price
+MPY =0.98
 STORE cost

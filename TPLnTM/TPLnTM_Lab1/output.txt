@@ -7,16 +7,16 @@ tax : double
 
 Неоптимизированный код:
 LOAD =0.98
-STORE $0
+STORE $2
 LOAD tax
-STORE $0
+STORE $1
 LOAD price
-ADD $0
-MPY $0
+ADD $1
+MPY $2
 STORE cost
 
 Оптимизированный код:
 LOAD tax
 ADD price
-MPY tax
+MPY =0.98
 STORE cost

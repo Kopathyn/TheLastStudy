@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Linq;
 
 namespace TPLnTM_Lab2
 {
@@ -42,7 +41,7 @@ namespace TPLnTM_Lab2
             {
                 if (IsVariable(token) || IsConstant(token))
                 {
-                    Node node = new Node { oper = token };
+                    Node node = new Node { oper = token, level = 0};
                     stack.Push(node);
 
                     if (IsVariable(token))
@@ -58,6 +57,8 @@ namespace TPLnTM_Lab2
                     Node node = new Node { oper = token };
                     node.right = stack.Pop();
                     node.left = stack.Pop();
+                    node.level = Math.Max(node.left.level, node.right.level) + 1;
+
                     stack.Push(node);
                 }
             }
@@ -193,8 +194,8 @@ namespace TPLnTM_Lab2
             List<string> assemblyCode = new();
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine("Дерево:\n");
-                PrintTreeToFile(root, writer, 0);
+                //writer.WriteLine("Дерево:\n");
+                //PrintTreeToFile(root, writer, 0);
 
                 writer.WriteLine("\nТаблица имен:");
                 foreach (var variable in _variableTable)

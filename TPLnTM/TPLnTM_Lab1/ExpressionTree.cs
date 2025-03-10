@@ -42,7 +42,7 @@ namespace TPLnTM_Lab1
             {
                 if (IsVariable(token) || IsConstant(token))
                 {
-                    Node node = new Node { oper = token };
+                    Node node = new Node { oper = token, level = 0 };
                     stack.Push(node);
 
                     if (IsVariable(token))
@@ -58,6 +58,8 @@ namespace TPLnTM_Lab1
                     Node node = new Node { oper = token };
                     node.right = stack.Pop();
                     node.left = stack.Pop();
+                    node.level = Math.Max(node.left.level, node.right.level) + 1;
+
                     stack.Push(node);
                 }
             }

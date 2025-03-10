@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace TPLnTM_Lab2
@@ -12,62 +10,54 @@ namespace TPLnTM_Lab2
         /// </summary>
         static public string CheckString(string str)
         {
-            // Проверка общего формата строки
             Regex regex = new Regex(@"
             ^\s*
-            (?<variable>[A-Za-z][A-Za-z0-9]*)       # Переменная слева
+            (?<variable>[A-Za-z][A-Za-z0-9]*)       
             \s*=\s*
-            (?<expression>                           # Выражение справа
-                (
-                    (?<number>
-                        \d+\.\d+([eE][+-]?\d+)? |   # float
-                        \d+[eE][+-]?\d+      |      # экспонента
-                        \b\d+\b(?!\.)               # int
-                    )
-                    |
-                    (?<variable>[A-Za-z][A-Za-z0-9]*)  # Переменные
-                    |
-                    (?<operator>[+*=()])             # Операторы и скобки
-                    |
-                    (?<whitespace>\s+)               # Пробелы (игнорируются)
-                )+
-            )
+            (?<expression>
+                (?<number>
+                    \d+\.\d+([eE][+]?\d+)? |
+                    \d+[eE][+]?\d+      |
+                    \b\d+\b(?!\.)
+                )
+                |
+                (?<var>[A-Za-z][A-Za-z0-9]*)   
+                |
+                (?<operator>[*+()])             
+                |
+                (?<whitespace>\s+)              
+            )+
             \s*$",
                 RegexOptions.IgnorePatternWhitespace
             );
 
             Match formatMatch = regex.Match(str);
-            if (!formatMatch.Success) 
+            if (!formatMatch.Success)
                 return null;
 
-            string variable = formatMatch.Groups[1].Value;
-            string expression = formatMatch.Groups[2].Value;
-
-            // Извлечение токенов из выражения
-            Regex tokenRegex = new Regex(
-                @"(?x)
-                (?<number>  \d+\.\d+([eE][+]?\d+)?
-                            | \d+[eE][+]?\d+
-                            | \b\d+\b(?!\.)
-                )
-                | (?<variable> [A-Za-z][A-Za-z0-9]*)
-                | (?<operator> [+*()])
-                | (?<whitespace> \s+)
-                ");
+            string variable = formatMatch.Groups["variable"].Value;
 
             var tokens = new List<string> { variable, "=" };
 
-            foreach (Match m in tokenRegex.Matches(expression))
-                if (m.Groups["number"].Success || m.Groups["variable"].Success || m.Groups["operator"].Success)
-                    tokens.Add(m.Value);
+            // Обрабатываем захваченные группы выражения
+            var numberCaptures = formatMatch.Groups["number"].Captures.Cast<Capture>();
+            var varCaptures = formatMatch.Groups["var"].Captures.Cast<Capture>();
+            var operatorCaptures = formatMatch.Groups["operator"].Captures.Cast<Capture>();
 
-            return ConvertToRPN(tokens);
+            // Объединяем и сортируем токены по позиции в строке
+            var allCaptures = numberCaptures.Concat(varCaptures).Concat(operatorCaptures)
+                                          .OrderBy(c => c.Index)
+                                          .Select(c => c.Value);
+
+            tokens.AddRange(allCaptures);
+
+            return ConvertToOPZ(tokens);
         }
 
         /// <summary>
-        /// Преобразование в обратную польскую запись
+        /// Преобразование в обратную польскую запись (с учетом =)
         /// </summary>
-        private static string ConvertToRPN(List<string> tokens)
+        private static string ConvertToOPZ(List<string> tokens)
         {
             List<string> output = new List<string>();
             Stack<string> stack = new Stack<string>();
@@ -92,9 +82,7 @@ namespace TPLnTM_Lab2
                 }
                 else
                 {
-                    int currentPriority = GetOperatorPriority(token); 
-
-                    while (stack.Count > 0 && GetOperatorPriority(stack.Peek()) >= currentPriority)
+                    while (stack.Count > 0 && GetOperatorPriority(stack.Peek()) >= GetOperatorPriority(token))
                         output.Add(stack.Pop());
 
                     stack.Push(token);
@@ -117,11 +105,11 @@ namespace TPLnTM_Lab2
             switch (op)
             {
                 case "*":
-                    return 3; // Наивысший приоритет
+                    return 3;
                 case "+":
-                    return 2; // Средний приоритет
+                    return 2;
                 default:
-                    return 0; // Не оператор
+                    return 0;
             }
         }
 
@@ -141,6 +129,6 @@ namespace TPLnTM_Lab2
         private static bool IsConstant(string expr)
         {
             return double.TryParse(expr, CultureInfo.InvariantCulture, out _);
-        }            
+        }
     }
 }
