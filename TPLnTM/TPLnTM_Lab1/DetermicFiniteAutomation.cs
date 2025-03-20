@@ -42,7 +42,8 @@ public class DeterministicFiniteAutomatonWithStack
 
             if (matchedAlphabet == null)
             {
-                Console.WriteLine("Автомат завершил работу с ошибкой.");
+                Console.WriteLine("Автомат завершил работу с ошибкой.\n" +
+                    $"Состояние {state}, Символ {symbol}");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
                 return null;
             }
@@ -79,6 +80,9 @@ public class DeterministicFiniteAutomatonWithStack
                         break;
                     }
 
+                    if (char.IsWhiteSpace(symbol))
+                        break;
+
                     // Обработка символов в соответствии с алгоритмом
                     if (char.IsLetterOrDigit(symbol) || symbol == '.')
                         outputString += symbol;
@@ -101,7 +105,8 @@ public class DeterministicFiniteAutomatonWithStack
 
             if (!transitionFlag)
             {
-                Console.WriteLine("Автомат завершил работу с ошибкой.");
+                Console.WriteLine("Автомат завершил работу с ошибкой.\n" +
+                    $"Состояние {state}, Символ {symbol}");
                 File.WriteAllText(_filePath, "Строка введена некорректно");
                 return null;
             }
@@ -119,7 +124,8 @@ public class DeterministicFiniteAutomatonWithStack
         }
         else
         {
-            Console.WriteLine("Автомат завершил работу с ошибкой.");
+            Console.WriteLine("Автомат завершил работу с ошибкой.\n" +
+                    $"Состояние {state}");
             File.WriteAllText(_filePath, "Строка введена некорректно");
             return null;
         }
@@ -152,6 +158,7 @@ public class DeterministicFiniteAutomatonWithStack
         "\\(", "\\)", // Скобки (3, 4)
         "\\.",        // "Запятая" (5)
         "\\=",        // Знак равенства (6)
+        "\\s"         // Пробел (7)
     };
 
     // Таблица переходов
@@ -159,7 +166,11 @@ public class DeterministicFiniteAutomatonWithStack
     {
         {
             "q0",
-            new string[][] { new string[] { "q1", _alphabet[0] } }
+            new string[][] 
+            {
+                new[] { "q1", _alphabet[0] },
+                new[] { "q0", _alphabet[7] }
+            }
         },
         {
             "q1",
@@ -167,39 +178,39 @@ public class DeterministicFiniteAutomatonWithStack
             {
                 new string[] { "q1", _alphabet[0]  },
                 new string[] { "q1", _alphabet[1] },
-                new string[] { "q2", _alphabet[6] }
+                new string[] { "q2", _alphabet[7] },
+                new[] { "q3", _alphabet[6] }
             }
         },
         {
             "q2",
             new string[][]
             {
-                new string[] { "q3", _alphabet[1] },
-                new string[] { "q4", _alphabet[0] },
-                new string[] { "q5", _alphabet[3], "Push" }
+                new string[] { "q2", _alphabet[7] },
+                new string[] { "q3", _alphabet[6] }
             }
         },
         {
             "q3",
             new string[][]
             {
-                new string[] { "q2", _alphabet[2] },
-                new string[] { "q3", _alphabet[1] },
-                new string[] { "q5", _alphabet[4], "Pop" },
-                new string[] { "q6", "E" },
-                new string[] { "q6", "e" },
-                new string[] { "q7", _alphabet[5] },
-                new string[] { "HALT", "" }
+                new[] { "q3", _alphabet[7] },
+                new[] { "q3", _alphabet[3], "Push" },
+                new string[] { "q4", _alphabet[1] },
+                new string[] { "q5", _alphabet[0] }
             }
         },
         {
             "q4",
             new string[][]
             {
-                new string[] { "q2", _alphabet[2] },
-                new string[] { "q4", _alphabet[0] },
+                new[] { "q3", _alphabet[2] },
                 new string[] { "q4", _alphabet[1] },
-                new string[] { "q5", _alphabet[4], "Pop" },
+                new[] { "q6", _alphabet[4], "Pop" },
+                new string[] { "q7", _alphabet[5] },
+                new[] { "q9", "E" },
+                new[] { "q9", "e"},
+                new[] { "q12", _alphabet[7] },
                 new string[] { "HALT", "" }
             }
         },
@@ -207,25 +218,77 @@ public class DeterministicFiniteAutomatonWithStack
             "q5",
             new string[][]
             {
-                new string[] { "q2", _alphabet[2] },
-                new string[] { "q3", _alphabet[1] },
-                new string[] { "q4", _alphabet[0] },
-                new string[] { "q5", _alphabet[3], "Push" },
-                new string[] { "q5", _alphabet[4], "Pop" },
+                new[] { "q3", _alphabet[2] },
+                new[] { "q5",  _alphabet[0] },
+                new[] { "q5", _alphabet[1] },
+                new[] { "q6", _alphabet[4], "Pop" },
+                new[] { "q12", _alphabet[7] },
                 new string[] { "HALT", "" }
             }
         },
         {
             "q6",
-            new string[][] { new string[] { "q7", "+" } }
+            new string[][] 
+            {
+                new[] { "q3", _alphabet[2] },
+                new string[] { "q6", _alphabet[4], "Pop" },
+                new[] { "q6", _alphabet[7] },
+                new string[] { "HALT", "" }
+            }
         },
         {
             "q7",
             new string[][]
             {
-                new string[] { "q2", _alphabet[2] },
-                new string[] { "q7", _alphabet[1] },
-                new string[] { "q7", _alphabet[4], "Pop" },
+                new string[] { "q8", _alphabet[1] }
+            }
+        },
+        {
+            "q8",
+            new string[][]
+            {
+                new[] { "q3", _alphabet[2] },
+                new[] { "q6", _alphabet[4], "Pop" },
+                new[] { "q8", _alphabet[1] },
+                new[] { "q9", "E" },
+                new[] { "q9", "e" },
+                new[] { "q12", _alphabet[7] },
+                new string[] { "HALT", "" }
+            }
+        },
+        {
+            "q9",
+            new string[][]
+            {
+                new[] { "q10", "+"},
+                new[] { "q10", "-"}
+            }
+        },
+        {
+            "q10",
+            new string[][]
+            {
+                new[] { "q11", _alphabet[1] }
+            }
+        },
+        {
+            "q11",
+            new string[][]
+            {
+                new[] { "q3", _alphabet[2] },
+                new[] { "q6", _alphabet[4], "Pop" },
+                new[] { "q11", _alphabet[1] },
+                new[] { "q12", _alphabet[7] },
+                new string[] { "HALT", "" }
+            }
+        },
+        {
+            "q12",
+            new string[][]
+            {
+                new[] { "q3", _alphabet[2] },
+                new[] { "q6", _alphabet[4], "Pop" },
+                new[] { "q12", _alphabet[7] },
                 new string[] { "HALT", "" }
             }
         }

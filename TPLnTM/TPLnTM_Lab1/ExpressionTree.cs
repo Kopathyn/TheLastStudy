@@ -40,7 +40,10 @@ namespace TPLnTM_Lab1
 
             foreach (var token in tokens)
             {
-                if (IsVariable(token) || IsConstant(token))
+                if (string.IsNullOrEmpty(token))
+                    continue;
+
+                if ((IsVariable(token) || IsConstant(token)))
                 {
                     Node node = new Node { oper = token, level = 0 };
                     stack.Push(node);
