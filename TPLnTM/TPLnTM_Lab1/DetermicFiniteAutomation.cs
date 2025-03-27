@@ -180,6 +180,11 @@ public class DeterministicFiniteAutomatonWithStack
             currentState = lastTransition.Item1;
             lastTransition.Item2?.Invoke(' ');
         }
+        else
+        {
+            ErrorMessage(currentState, ' ');
+            return null;
+        }
 
         if (currentState == "HALT")
             return _rpnCreator.OutputString;
