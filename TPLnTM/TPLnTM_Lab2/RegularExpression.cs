@@ -25,7 +25,7 @@ namespace TPLnTM_Lab2
                 |
                 (?<operator>[*+()])             
                 |
-                (?<whitespace>\s+)              
+                \s+              
             )+
             \s*$",
                 RegexOptions.IgnorePatternWhitespace
@@ -55,7 +55,7 @@ namespace TPLnTM_Lab2
         }
 
         /// <summary>
-        /// Преобразование в обратную польскую запись (с учетом =)
+        /// Преобразование в обратную польскую запись
         /// </summary>
         private static string ConvertToOPZ(List<string> tokens)
         {

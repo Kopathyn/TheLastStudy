@@ -1,5 +1,4 @@
 ﻿using System.Globalization;
-using System.Linq;
 
 namespace TPLnTM_Lab1
 {
@@ -25,6 +24,7 @@ namespace TPLnTM_Lab1
     /// </summary>
     public class ExpressionTree
     {
+        private Dictionary<string, string> _variableTable = new Dictionary<string, string>(); // Таблица имен
 
         #region PublicFunctions
 
@@ -53,6 +53,9 @@ namespace TPLnTM_Lab1
 
                     else if (token.Contains('.'))
                         _variableTable.Add(token, "const float");
+
+                    else if (token.Contains('e') || token.Contains('E'))
+                        _variableTable.Add(token, "const double");
 
                     else _variableTable.Add(token, "const int");
                 }
@@ -198,8 +201,8 @@ namespace TPLnTM_Lab1
             List<string> assemblyCode = new();
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                //writer.WriteLine("Дерево:\n");
-                //PrintTreeToFile(root, writer, 0);
+                writer.WriteLine("Дерево:\n");
+                PrintTreeToFile(root, writer, 0);
 
                 writer.WriteLine("\nТаблица имен:");
                 foreach (var variable in _variableTable)
@@ -246,8 +249,6 @@ namespace TPLnTM_Lab1
         }
 
         #endregion
-
-        private Dictionary<string, string> _variableTable = new Dictionary<string, string>(); // Таблица имен
 
     }
 }

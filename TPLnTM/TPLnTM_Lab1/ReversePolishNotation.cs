@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TPLnTM_Lab1
+﻿namespace TPLnTM_Lab1
 {
     public class ReversePolishNotation
     {
+        private Stack<char> _operatorStack;
+        private string _outputString;
+
+        public string OutputString { get { return _outputString; } }
+
         public ReversePolishNotation() 
         { 
             _outputString = null; _operatorStack = new(); 
@@ -80,10 +79,5 @@ namespace TPLnTM_Lab1
                     return 0; // Не оператор
             }
         }
-
-        private Stack<char> _operatorStack;
-        private string _outputString;
-
-        public string OutputString { get { return _outputString; } }
     }
 }
