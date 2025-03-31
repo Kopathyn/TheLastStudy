@@ -10,34 +10,44 @@ namespace TPLnTM_Lab2
         /// </summary>
         static public string CheckString(string str)
         {
-            Regex regex = new Regex(@"
-            ^\s*
-            (?<variable>[A-Za-z][A-Za-z0-9]*)       
-            \s*=\s*
-            (?<expression>
+            Regex regex = new Regex(@"^ 
+            (?<var> [a-zA-Z][a-zA-Z0-9]*)
+            \s*=\s*                        
+            (?:
+              (?: 
+                ( \( (?<Open>) )
+                  (?= [a-zA-Z0-9.(] )
+                |
+                ( \) (?<-Open>) )
+                  (?= [+\*)\s]|$ )
+                |
                 (?<number>
-                    \d+\.\d+([eE][+]?\d+)? |
-                    \d+[eE][+]?\d+      |
-                    \b\d+\b(?!\.)
+                  \d+(?:\.\d+)?(?:[eE][+-]?\d+)? 
                 )
+                  (?= [+\*)\s]|$ )
                 |
-                (?<var>[A-Za-z][A-Za-z0-9]*)   
+                (?<var>
+                  [a-zA-Z][a-zA-Z0-9]* 
+                )
+                  (?= [+\*)\s]|$ )
                 |
-                (?<operator>[*+()])             
-                |
-                \s+              
+                (?<= [a-zA-Z0-9)] )        
+                (?<operator> [+\*] )             
+                  (?= [a-zA-Z0-9.(] )
+
+              )
             )+
-            \s*$",
-                RegexOptions.IgnorePatternWhitespace
-            );
+            (?(Open)(?!))
+            $", RegexOptions.IgnorePatternWhitespace);
 
             Match formatMatch = regex.Match(str);
+
             if (!formatMatch.Success)
                 return null;
 
-            string variable = formatMatch.Groups["variable"].Value;
+            //string variable = formatMatch.Groups["variable"].Value;
 
-            var tokens = new List<string> { variable, "=" };
+            var tokens = new List<string>();
 
             // Обрабатываем захваченные группы выражения
             var numberCaptures = formatMatch.Groups["number"].Captures.Cast<Capture>();
