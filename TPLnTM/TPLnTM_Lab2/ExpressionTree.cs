@@ -24,6 +24,7 @@ namespace TPLnTM_Lab2
     /// </summary>
     public class ExpressionTree
     {
+        private Dictionary<string, string> _variableTable = new Dictionary<string, string>(); // Таблица имен
 
         #region PublicFunctions
 
@@ -39,9 +40,12 @@ namespace TPLnTM_Lab2
 
             foreach (var token in tokens)
             {
-                if (IsVariable(token) || IsConstant(token))
+                if (string.IsNullOrEmpty(token))
+                    continue;
+
+                if ((IsVariable(token) || IsConstant(token)))
                 {
-                    Node node = new Node { oper = token, level = 0};
+                    Node node = new Node { oper = token, level = 0 };
                     stack.Push(node);
 
                     if (IsVariable(token))
@@ -49,6 +53,9 @@ namespace TPLnTM_Lab2
 
                     else if (token.Contains('.'))
                         _variableTable.Add(token, "const float");
+
+                    else if (token.Contains('e') || token.Contains('E'))
+                        _variableTable.Add(token, "const double");
 
                     else _variableTable.Add(token, "const int");
                 }
@@ -227,25 +234,15 @@ namespace TPLnTM_Lab2
         /// Проверка на то, являелся ли подстрока переменной
         /// </summary>
         /// <param name="expr">Строка или продстрока</param>
-        private bool IsVariable(string expr)
-        {
-            // Проверяем, является ли выражение идентификатором переменной
-            return !string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]);
-        }
+        private bool IsVariable(string expr) => (!string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]));
 
         /// <summary>
         /// Проверка на то, является ли строка константой
         /// </summary>
         /// <param name="expr">Строка или подстрока</param>
-        private bool IsConstant(string expr)
-        {
-            // Проверяем, является ли выражение константой (числом)
-            return double.TryParse(expr, CultureInfo.InvariantCulture, out _);
-        }
+        private bool IsConstant(string expr) => double.TryParse(expr, CultureInfo.InvariantCulture, out _);
 
         #endregion
-
-        private Dictionary<string, string> _variableTable = new Dictionary<string, string>(); // Таблица имен
 
     }
 }

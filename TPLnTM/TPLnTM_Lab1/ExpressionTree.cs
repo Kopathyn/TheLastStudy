@@ -234,19 +234,13 @@ namespace TPLnTM_Lab1
         /// Проверка на то, являелся ли подстрока переменной
         /// </summary>
         /// <param name="expr">Строка или продстрока</param>
-        private bool IsVariable(string expr)
-        {
-            return !string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]);
-        }
+        private bool IsVariable(string expr) => (!string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]));
 
         /// <summary>
         /// Проверка на то, является ли строка константой
         /// </summary>
         /// <param name="expr">Строка или подстрока</param>
-        private bool IsConstant(string expr)
-        {
-            return double.TryParse(expr, CultureInfo.InvariantCulture, out _);
-        }
+        private bool IsConstant(string expr) => double.TryParse(expr, CultureInfo.InvariantCulture, out _);
 
         #endregion
 

@@ -12,29 +12,17 @@ namespace TPLnTM_Lab2
         {
             Regex regex = new Regex(@"^ 
             (?<var> [a-zA-Z][a-zA-Z0-9]*)
-            \s*=\s*                        
+            \s* (?<operator>=) \s*                        
             (?:
               (?: 
-                ( \( (?<Open>) )
-                  (?= [a-zA-Z0-9.(] )
-                |
-                ( \) (?<-Open>) )
-                  (?= [+\*)\s]|$ )
-                |
-                (?<number>
-                  \d+(?:\.\d+)?(?:[eE][+-]?\d+)? 
-                )
-                  (?= [+\*)\s]|$ )
-                |
-                (?<var>
-                  [a-zA-Z][a-zA-Z0-9]* 
-                )
-                  (?= [+\*)\s]|$ )
-                |
-                (?<= [a-zA-Z0-9)] )        
-                (?<operator> [+\*] )             
-                  (?= [a-zA-Z0-9.(] )
+                \s*(?<operator>\( (?<Open>))\s*  (?= \s*[a-zA-Z0-9.(])    |
+                \s*(?<operator>\) (?<-Open>))\s*  (?= [+\*)]|$)    |
 
+                (?<number> \d+(?:\.\d+)?(?:[eE][+-]?\d+)?)  (?= [+\*)\s]|$ )    |
+
+                (?<var> [a-zA-Z][a-zA-Z0-9]*) (?= [+\*)\s]|$ )    |
+
+                (?<= [a-zA-Z0-9)\s] ) \s*(?<operator> [+\*] )\s* (?= \s*[a-zA-Z0-9.(])
               )
             )+
             (?(Open)(?!))
@@ -45,20 +33,16 @@ namespace TPLnTM_Lab2
             if (!formatMatch.Success)
                 return null;
 
-            //string variable = formatMatch.Groups["variable"].Value;
-
-            var tokens = new List<string>();
-
-            // Обрабатываем захваченные группы выражения
-            var numberCaptures = formatMatch.Groups["number"].Captures.Cast<Capture>();
             var varCaptures = formatMatch.Groups["var"].Captures.Cast<Capture>();
             var operatorCaptures = formatMatch.Groups["operator"].Captures.Cast<Capture>();
+            var numberCaptures = formatMatch.Groups["number"].Captures.Cast<Capture>();
 
             // Объединяем и сортируем токены по позиции в строке
             var allCaptures = numberCaptures.Concat(varCaptures).Concat(operatorCaptures)
                                           .OrderBy(c => c.Index)
                                           .Select(c => c.Value);
 
+            var tokens = new List<string>();
             tokens.AddRange(allCaptures);
 
             return ConvertToOPZ(tokens);
@@ -88,7 +72,8 @@ namespace TPLnTM_Lab2
                     while (stack.Count > 0 && stack.Peek() != "(")
                         output.Add(stack.Pop());
 
-                    stack.Pop();
+                    if (stack.Count > 0)
+                        stack.Pop();
                 }
                 else
                 {
@@ -101,6 +86,8 @@ namespace TPLnTM_Lab2
 
             while (stack.Count > 0)
                 output.Add(stack.Pop());
+
+            Console.WriteLine(string.Join(" ", output));
 
             return string.Join(" ", output);
         }
@@ -127,18 +114,12 @@ namespace TPLnTM_Lab2
         /// Проверка на то, являелся ли подстрока переменной
         /// </summary>
         /// <param name="expr">Строка или продстрока</param>
-        private static bool IsVariable(string expr)
-        {
-            return !string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]);
-        }
+        private static bool IsVariable(string expr) => (!string.IsNullOrEmpty(expr) && char.IsLetter(expr[0]));
 
         /// <summary>
         /// Проверка на то, является ли строка константой
         /// </summary>
         /// <param name="expr">Строка или подстрока</param>
-        private static bool IsConstant(string expr)
-        {
-            return double.TryParse(expr, CultureInfo.InvariantCulture, out _);
-        }
+        private static bool IsConstant(string expr) => double.TryParse(expr, CultureInfo.InvariantCulture, out _);
     }
 }
