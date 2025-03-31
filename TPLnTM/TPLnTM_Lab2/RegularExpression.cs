@@ -11,19 +11,20 @@ namespace TPLnTM_Lab2
         static public string CheckString(string str)
         {
             Regex regex = new Regex(@"^ 
-            (?<var> [a-zA-Z][a-zA-Z0-9]*)
-            \s* (?<operator>=) \s*                        
+            \s* (?<var> [a-zA-Z][a-zA-Z0-9]*)
+            \s* (?<operator>=) \s*
+            (?= \s* (?: \d | [a-zA-Z] | \( ))
             (?:
               (?: 
-                \s*(?<operator>\( (?<Open>))\s*  (?= \s*[a-zA-Z0-9.(])    |
-                \s*(?<operator>\) (?<-Open>))\s*  (?= [+\*)]|$)    |
+                \s*(?<operator>\( (?<Open>))\s*  (?= \s*[a-zA-Z0-9.(])  |
+                \s*(?<operator>\) (?<-Open>))\s*  (?= [+\*)]|$) |
 
                 (?<number> \d+(?:\.\d+)?(?:[eE][+-]?\d+)?)  (?= [+\*)\s]|$ )    |
 
-                (?<var> [a-zA-Z][a-zA-Z0-9]*) (?= [+\*)\s]|$ )    |
+                (?<var> [a-zA-Z][a-zA-Z0-9]*) (?= [+\*)\s]|$ )  |
 
                 (?<= [a-zA-Z0-9)\s] ) \s*(?<operator> [+\*] )\s* (?= \s*[a-zA-Z0-9.(])
-              )
+              )\s*
             )+
             (?(Open)(?!))
             $", RegexOptions.IgnorePatternWhitespace);
@@ -87,7 +88,7 @@ namespace TPLnTM_Lab2
             while (stack.Count > 0)
                 output.Add(stack.Pop());
 
-            Console.WriteLine(string.Join(" ", output));
+            //Console.WriteLine(string.Join(" ", output));
 
             return string.Join(" ", output);
         }
