@@ -10,7 +10,7 @@ public class Program
 
         string str = File.ReadAllText(inputPath);
 
-        DeterministicFiniteAutomatonWithStack DFA = new(outputPath);
+        DeterministicFiniteAutomaton DFA = new(outputPath);
 
         Console.WriteLine($"Обработка строки: {str}");
         string result = DFA.Run(str);

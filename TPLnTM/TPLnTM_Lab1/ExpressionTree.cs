@@ -201,8 +201,8 @@ namespace TPLnTM_Lab1
             List<string> assemblyCode = new();
             using (StreamWriter writer = new StreamWriter(filePath))
             {
-                writer.WriteLine("Дерево:\n");
-                PrintTreeToFile(root, writer, 0);
+                //writer.WriteLine("Дерево:\n");
+                //PrintTreeToFile(root, writer, 0);
 
                 writer.WriteLine("\nТаблица имен:");
                 foreach (var variable in _variableTable)

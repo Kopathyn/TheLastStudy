@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using TPLnTM_Lab1;
 
-public class DeterministicFiniteAutomatonWithStack
+public class DeterministicFiniteAutomaton
 {
     private static ReversePolishNotation _rpnCreator = new();
 
@@ -13,7 +13,7 @@ public class DeterministicFiniteAutomatonWithStack
     private static string[] _states =
     {
         "q0", "q1", "q2", "q3", "q4", "q5", "q6",
-        "q7", "q8", "q9", "q10", "q11", "q12"
+        "q7", "q8", "q9", "q10", "q11"
     };
 
     /// <summary>
@@ -42,19 +42,19 @@ public class DeterministicFiniteAutomatonWithStack
     /// <summary>
     /// Внедреные действия
     /// </summary>
-    private static Action<char>[] _implementedActions =
+    private static Func<char, bool>[] _implementedActions =
     {
-        x => _rpnCreator.ActionOne(x),
-        x => _rpnCreator.ActionTwo(x),
-        x => _rpnCreator.ActionThree(),
-        x => _rpnCreator.ActionFour(x),
-        x => _rpnCreator.ActionFive()
+       x => {return _rpnCreator.ActionOne(x); },
+        x => { return _rpnCreator.ActionTwo(x); },
+        x => { return _rpnCreator.ActionThree(); },
+        x => { return _rpnCreator.ActionFour(x); },
+        x => { return _rpnCreator.ActionFive(); }
     };
 
     /// <summary>
     /// Таблица переходов
     /// </summary>
-    private Dictionary<Tuple<string, string>, Tuple<string, Action<char>>> _newTransitionTable = new()
+    private Dictionary<Tuple<string, string>, Tuple<string, Func<char, bool>>> _newTransitionTable = new()
     {
         // q0
         { new(_states[0], _alphabet[0]), new(_states[1], _implementedActions[0]) },
@@ -83,7 +83,7 @@ public class DeterministicFiniteAutomatonWithStack
         { new(_states[4], _alphabet[5]), new(_states[7], _implementedActions[0]) },
         { new(_states[4], "E"), new(_states[9], _implementedActions[0]) },
         { new(_states[4], "e"), new(_states[9], _implementedActions[0]) },
-        { new(_states[4], _alphabet[7]), new(_states[12], null) },
+        { new(_states[4], _alphabet[7]), new(_states[6], null) },
         { new(_states[4], string.Empty), new("HALT", _implementedActions[4]) },
 
         // q5
@@ -91,7 +91,7 @@ public class DeterministicFiniteAutomatonWithStack
         { new(_states[5], _alphabet[0]), new(_states[5], _implementedActions[0]) },
         { new(_states[5], _alphabet[1]), new(_states[5], _implementedActions[0]) },
         { new(_states[5], _alphabet[4]), new(_states[6], _implementedActions[2]) },
-        { new(_states[5], _alphabet[7]), new(_states[12], null) },
+        { new(_states[5], _alphabet[7]), new(_states[6], null) },
         { new(_states[5], string.Empty), new("HALT", _implementedActions[4]) },
 
         // q6
@@ -109,12 +109,13 @@ public class DeterministicFiniteAutomatonWithStack
         { new(_states[8], _alphabet[1]), new(_states[8], _implementedActions[0]) },
         { new(_states[8], "E"), new(_states[9], _implementedActions[0]) },
         { new(_states[8], "e"), new(_states[9], _implementedActions[0]) },
-        { new(_states[8], _alphabet[7]), new(_states[12], null) },
+        { new(_states[8], _alphabet[7]), new(_states[6], null) },
         { new(_states[8], string.Empty), new("HALT", _implementedActions[4]) },
 
         // q9
         { new(_states[9], "+"), new(_states[10], _implementedActions[0]) },
         { new(_states[9], "-"), new(_states[10], _implementedActions[0]) },
+        { new(_states[9], _alphabet[1]), new(_states[11], _implementedActions[0]) },
 
         // q10
         { new(_states[10], _alphabet[1]), new(_states[11], _implementedActions[0]) },
@@ -123,17 +124,11 @@ public class DeterministicFiniteAutomatonWithStack
         { new(_states[11], _alphabet[2]), new(_states[3], _implementedActions[3]) },
         { new(_states[11], _alphabet[4]), new(_states[6], _implementedActions[2]) },
         { new(_states[11], _alphabet[1]), new(_states[11], _implementedActions[0]) },
-        { new(_states[11], _alphabet[7]), new(_states[12], null) },
-        { new(_states[11], string.Empty), new("HALT", _implementedActions[4]) },
-
-        // q12
-        { new(_states[12], _alphabet[2]), new(_states[3], _implementedActions[3]) },
-        { new(_states[12], _alphabet[4]), new(_states[6], _implementedActions[2]) },
-        { new(_states[12], _alphabet[7]), new(_states[12], null) },
-        { new(_states[12], string.Empty), new("HALT", _implementedActions[4]) }
+        { new(_states[11], _alphabet[7]), new(_states[6], null) },
+        { new(_states[11], string.Empty), new("HALT", _implementedActions[4]) }
     };
 
-    public DeterministicFiniteAutomatonWithStack(string path)
+    public DeterministicFiniteAutomaton(string path)
     {
         _filePath = path;
     }
@@ -160,13 +155,22 @@ public class DeterministicFiniteAutomatonWithStack
                 return null;
             }
 
-            Tuple<string, Action<char>> transition;
+            Tuple<string, Func<char, bool>> transition;
 
             if (_newTransitionTable.TryGetValue(new(currentState, currentAlphabet), out transition) ||
                 _newTransitionTable.TryGetValue(new(currentState, symbol.ToString()), out transition))
             {
                 currentState = transition.Item1;
-                transition.Item2?.Invoke(symbol);
+
+                if (transition.Item2 != null)
+                {
+                    bool actionResult = transition.Item2.Invoke(symbol);
+                    if (!actionResult)
+                    {
+                        ErrorMessage(currentState, symbol);
+                        return null;
+                    }
+                }
             }
             else
             {
@@ -178,11 +182,17 @@ public class DeterministicFiniteAutomatonWithStack
         if (_newTransitionTable.TryGetValue(new(currentState, string.Empty), out var lastTransition))
         {
             currentState = lastTransition.Item1;
-            lastTransition.Item2?.Invoke(' ');
+
+            bool actionResult = lastTransition.Item2.Invoke('\0');
+            if (!actionResult)
+            {
+                ErrorMessage(currentState, '\0');
+                return null;
+            }
         }
         else
         {
-            ErrorMessage(currentState, ' ');
+            ErrorMessage(currentState, '\0');
             return null;
         }
 
@@ -190,7 +200,7 @@ public class DeterministicFiniteAutomatonWithStack
             return _rpnCreator.OutputString;
         else
         {
-            ErrorMessage(currentState, ' ');
+            ErrorMessage(currentState, '\0');
             return null;
         }
     }

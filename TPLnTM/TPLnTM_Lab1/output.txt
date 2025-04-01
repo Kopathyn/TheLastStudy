@@ -1,31 +1,12 @@
-Дерево:
-
-        0.98
-    *
-            tax
-        +
-            price
-=
-    cost
 
 Таблица имен:
 cost : double
-price : double
-tax : double
-0.98 : const float
+10 : const int
 
 Неоптимизированный код:
-LOAD =0.98
-STORE $2
-LOAD tax
-STORE $1
-LOAD price
-ADD $1
-MPY $2
+LOAD =10
 STORE cost
 
 Оптимизированный код:
-LOAD tax
-ADD price
-MPY =0.98
+LOAD =10
 STORE cost
